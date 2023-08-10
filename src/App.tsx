@@ -1,34 +1,74 @@
-import React, { useEffect } from "react";
+import React from "react";
 import { useState } from "react";
+
 import { useControls } from "react-zoom-pan-pinch";
 import { ReactZoomPanPinchState } from "react-zoom-pan-pinch";
 import { useTransformContext } from "react-zoom-pan-pinch";
 import { useTransformEffect } from "react-zoom-pan-pinch";
-import { ReactZoomPanPinchHandlers } from "react-zoom-pan-pinch";
 import { TransformWrapper, TransformComponent } from "react-zoom-pan-pinch";
 
+import { DndContext } from "@dnd-kit/core";
+import { Droppable } from "./Droppable";
+import { Draggable } from "./Draggable";
+
 function App() {
+  const [isDropped, setIsDropped] = useState(false);
+  const [isBeingDragged, setIsBeingDragged] = useState(false);
+
+  console.log("isBeingDragged", isBeingDragged);
+
+  const handleDragEnd = (event: any) => {
+    if (event.over && event.over.id === "droppable") {
+      setIsDropped(true);
+    }
+    setIsBeingDragged(false);
+  };
+
+  const handleDragStart = (event: any) => {
+    setIsBeingDragged(true);
+  };
+
+  const children = (
+    <React.Fragment>
+      <TransformComponent>
+        <div>Example text</div>
+        {!isDropped && <Draggable>drag me</Draggable>}
+        <Droppable
+          style={{
+            width: "100vw",
+            height: "100vh",
+            background: "red",
+          }}
+        >
+          {isDropped ? <Draggable>drag me</Draggable> : "drop here"}
+        </Droppable>
+      </TransformComponent>
+      <Sidebar />
+    </React.Fragment>
+  );
   return (
-    <TransformWrapper
-      initialScale={0.3}
-      limitToBounds={false}
-      centerZoomedOut={false}
-      disablePadding={true}
-    >
-      <React.Fragment>
-        <TransformComponent>
-          <div
-            style={{
-              width: "100vw",
-              height: "100vh",
-              background: "red",
-            }}
-          />
-          <div>Example text</div>
-        </TransformComponent>
-        <Sidebar />
-      </React.Fragment>
-    </TransformWrapper>
+    <DndContext onDragEnd={handleDragEnd} onDragStart={handleDragStart}>
+      {isBeingDragged ? (
+        <TransformWrapper
+          initialScale={0.3}
+          limitToBounds={false}
+          centerZoomedOut={false}
+          disablePadding={true}
+          disabled={true}
+        >
+          {children}
+        </TransformWrapper>
+      ) : (
+        <TransformWrapper
+          initialScale={0.3}
+          limitToBounds={false}
+          centerZoomedOut={false}
+          disablePadding={true}
+        >
+          {children}
+        </TransformWrapper>
+      )}
+    </DndContext>
   );
 }
 
