@@ -1,4 +1,3 @@
-import React from "react";
 import { useState } from "react";
 
 import { useControls } from "react-zoom-pan-pinch";
@@ -7,48 +6,51 @@ import { useTransformContext } from "react-zoom-pan-pinch";
 import { useTransformEffect } from "react-zoom-pan-pinch";
 import { TransformWrapper, TransformComponent } from "react-zoom-pan-pinch";
 
-import { DndContext } from "@dnd-kit/core";
-import { Droppable } from "./Droppable";
-import { Draggable } from "./Draggable";
+import { DndContext, useDndContext } from "@dnd-kit/core";
+
+import { BasicSetup as DraggableStory } from "./DraggableStory.tsx";
+import { useDraggable } from "@dnd-kit/core";
 
 function App() {
-  const [isDropped, setIsDropped] = useState(false);
-  const [isBeingDragged, setIsBeingDragged] = useState(false);
+  // the base id of the draggable element is 'draggable'
+  const { active, isDragging } = useDraggable({ id: "draggable" });
+  console.log(active, isDragging);
 
-  console.log("isBeingDragged", isBeingDragged);
+  const context = useDndContext();
+  console.log(context);
 
-  const handleDragEnd = (event: any) => {
-    if (event.over && event.over.id === "droppable") {
-      setIsDropped(true);
-    }
-    setIsBeingDragged(false);
-  };
-
-  const handleDragStart = (event: any) => {
-    setIsBeingDragged(true);
-  };
+  // TODO I can't access the `id: "draggable"`,
+  // it might be an issue with the DndContext not being available
+  // in this top level component
+  //
+  // the context logs out as empty, nothing happens on dragging of the DraggableStory
+  // the DndContext from that component has to be moved here,
+  // the core of the DraggableStory is the DraggableItem which shall
+  // be the base for the parent Draggable class to be used throughout the project
 
   const children = (
-    <React.Fragment>
+    <>
       <TransformComponent>
-        <div>Example text</div>
-        {!isDropped && <Draggable>drag me</Draggable>}
-        <Droppable
+        <div
           style={{
             width: "100vw",
             height: "100vh",
-            background: "red",
+            backgroundColor: "gray",
           }}
-        >
-          {isDropped ? <Draggable>drag me</Draggable> : "drop here"}
-        </Droppable>
+        ></div>
+        <DraggableStory />
       </TransformComponent>
       <Sidebar />
-    </React.Fragment>
+    </>
   );
+
   return (
-    <DndContext onDragEnd={handleDragEnd} onDragStart={handleDragStart}>
-      {isBeingDragged ? (
+    <DndContext
+      onDragStart={(event) => {
+        console.log(event);
+      }}
+    >
+      {isDragging ? (
         <TransformWrapper
           initialScale={0.3}
           limitToBounds={false}
@@ -98,7 +100,8 @@ function Sidebar() {
     resetTransform();
   };
 
-  const handleScroll = (e) => {
+  const handleScroll = (e: WheelEvent) => {
+    // TODO make sure this is right, positionX and positionY might require updating
     console.log(e);
     e.preventDefault();
     e.stopPropagation();
@@ -108,7 +111,7 @@ function Sidebar() {
     setTransform(state.positionX, state.positionY, newScale);
   };
 
-  useTransformEffect(({ state, instance }) => {
+  useTransformEffect(({ state }) => {
     setState(state);
     return () => {};
   });
