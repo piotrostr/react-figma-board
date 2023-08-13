@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState } from "react"
 import {
   DndContext,
   useDraggable,
@@ -9,35 +9,35 @@ import {
   PointerActivationConstraint,
   Modifiers,
   useSensors,
-} from "@dnd-kit/core";
+} from "@dnd-kit/core"
 import {
   createSnapModifier,
   restrictToHorizontalAxis,
   restrictToVerticalAxis,
   restrictToWindowEdges,
   snapCenterToCursor,
-} from "@dnd-kit/modifiers";
-import type { Coordinates } from "@dnd-kit/utilities";
+} from "@dnd-kit/modifiers"
+import type { Coordinates } from "@dnd-kit/utilities"
 
-import { Axis, Draggable, Grid, OverflowWrapper, Wrapper } from "./components";
+import { Axis, Draggable, Grid, OverflowWrapper, Wrapper } from "./components"
 
 export default {
   title: "Core/Draggable/Hooks/useDraggable",
-};
+}
 
 const defaultCoordinates = {
   x: 0,
   y: 0,
-};
+}
 
 interface Props {
-  activationConstraint?: PointerActivationConstraint;
-  axis?: Axis;
-  handle?: boolean;
-  modifiers?: Modifiers;
-  buttonStyle?: React.CSSProperties;
-  style?: React.CSSProperties;
-  label?: string;
+  activationConstraint?: PointerActivationConstraint
+  axis?: Axis
+  handle?: boolean
+  modifiers?: Modifiers
+  buttonStyle?: React.CSSProperties
+  style?: React.CSSProperties
+  label?: string
 }
 
 function DraggableStory({
@@ -49,26 +49,31 @@ function DraggableStory({
   style,
   buttonStyle,
 }: Props) {
-  const [{ x, y }, setCoordinates] = useState<Coordinates>(defaultCoordinates);
+  const [prevCoordinates, setPrevCoordinates] = useState<Coordinates>({
+    x: 0,
+    y: 0,
+  })
+  const [{ x, y }, setCoordinates] = useState<Coordinates>(defaultCoordinates)
   const mouseSensor = useSensor(MouseSensor, {
     activationConstraint,
-  });
+  })
   const touchSensor = useSensor(TouchSensor, {
     activationConstraint,
-  });
-  const keyboardSensor = useSensor(KeyboardSensor, {});
-  const sensors = useSensors(mouseSensor, touchSensor, keyboardSensor);
+  })
+  const keyboardSensor = useSensor(KeyboardSensor, {})
+  const sensors = useSensors(mouseSensor, touchSensor, keyboardSensor)
 
   return (
     <DndContext
       sensors={sensors}
-      onDragEnd={({ delta }) => {
-        setCoordinates(({ x, y }) => {
-          return {
-            x: x + delta.x,
-            y: y + delta.y,
-          };
-        });
+      onDragMove={({ delta }) => {
+        setCoordinates({
+          x: prevCoordinates.x + delta.x,
+          y: prevCoordinates.y + delta.y,
+        })
+      }}
+      onDragEnd={() => {
+        setPrevCoordinates({ x, y })
       }}
       modifiers={modifiers}
     >
@@ -84,17 +89,17 @@ function DraggableStory({
         />
       </Wrapper>
     </DndContext>
-  );
+  )
 }
 
 interface DraggableItemProps {
-  label: string;
-  handle?: boolean;
-  style?: React.CSSProperties;
-  buttonStyle?: React.CSSProperties;
-  axis?: Axis;
-  top?: number;
-  left?: number;
+  label: string
+  handle?: boolean
+  style?: React.CSSProperties
+  buttonStyle?: React.CSSProperties
+  axis?: Axis
+  top?: number
+  left?: number
 }
 
 function DraggableItem({
@@ -109,7 +114,7 @@ function DraggableItem({
   const { attributes, isDragging, listeners, setNodeRef, transform } =
     useDraggable({
       id: "draggable",
-    });
+    })
 
   return (
     <Draggable
@@ -124,14 +129,14 @@ function DraggableItem({
       axis={axis}
       {...attributes}
     />
-  );
+  )
 }
 
-export const BasicSetup = () => <DraggableStory />;
+export const BasicSetup = () => <DraggableStory />
 
 export const DragHandle = () => (
   <DraggableStory label="Drag with the handle" handle />
-);
+)
 
 export const PressDelay = () => (
   <DraggableStory
@@ -141,7 +146,7 @@ export const PressDelay = () => (
       tolerance: 5,
     }}
   />
-);
+)
 
 export const MinimumDistance = () => (
   <DraggableStory
@@ -150,7 +155,7 @@ export const MinimumDistance = () => (
       distance: 15,
     }}
   />
-);
+)
 
 export const MinimumDistanceX = () => (
   <DraggableStory
@@ -159,9 +164,9 @@ export const MinimumDistanceX = () => (
       distance: { x: 15 },
     }}
   />
-);
+)
 
-MinimumDistanceX.storyName = "Minimum Distance – X Axis";
+MinimumDistanceX.storyName = "Minimum Distance – X Axis"
 
 export const MinimumDistanceY = () => (
   <DraggableStory
@@ -170,9 +175,9 @@ export const MinimumDistanceY = () => (
       distance: { y: 15 },
     }}
   />
-);
+)
 
-MinimumDistanceY.storyName = "Minimum Distance – Y Axis";
+MinimumDistanceY.storyName = "Minimum Distance – Y Axis"
 
 export const MinimumDistanceXY = () => (
   <DraggableStory
@@ -181,9 +186,9 @@ export const MinimumDistanceXY = () => (
       distance: { x: 15, y: 15 },
     }}
   />
-);
+)
 
-MinimumDistanceXY.storyName = "Minimum Distance – X&Y Axis";
+MinimumDistanceXY.storyName = "Minimum Distance – X&Y Axis"
 
 export const MinimumDistanceXToleranceY = () => (
   <DraggableStory
@@ -193,10 +198,10 @@ export const MinimumDistanceXToleranceY = () => (
       tolerance: { y: 30 },
     }}
   />
-);
+)
 
 MinimumDistanceXToleranceY.storyName =
-  "Minimum Distance X Axis and Tolerance Y Axis";
+  "Minimum Distance X Axis and Tolerance Y Axis"
 
 export const MinimumDistanceYToleranceX = () => (
   <DraggableStory
@@ -206,10 +211,10 @@ export const MinimumDistanceYToleranceX = () => (
       tolerance: { x: 30 },
     }}
   />
-);
+)
 
 MinimumDistanceYToleranceX.storyName =
-  "Minimum Distance Y Axis and Tolerance X Axis";
+  "Minimum Distance Y Axis and Tolerance X Axis"
 
 export const HorizontalAxis = () => (
   <DraggableStory
@@ -217,7 +222,7 @@ export const HorizontalAxis = () => (
     axis={Axis.Horizontal}
     modifiers={[restrictToHorizontalAxis]}
   />
-);
+)
 
 export const VerticalAxis = () => (
   <DraggableStory
@@ -225,7 +230,7 @@ export const VerticalAxis = () => (
     axis={Axis.Vertical}
     modifiers={[restrictToVerticalAxis]}
   />
-);
+)
 
 export const RestrictToWindowEdges = () => (
   <OverflowWrapper>
@@ -234,20 +239,20 @@ export const RestrictToWindowEdges = () => (
       modifiers={[restrictToWindowEdges]}
     />
   </OverflowWrapper>
-);
+)
 
 export const SnapToGrid = () => {
-  const [gridSize, setGridSize] = React.useState(30);
+  const [gridSize, setGridSize] = React.useState(30)
   const style = {
     alignItems: "flex-start",
-  };
+  }
   const buttonStyle = {
     marginLeft: gridSize - 20 + 1,
     marginTop: gridSize - 20 + 1,
     width: gridSize * 8 - 1,
     height: gridSize * 2 - 1,
-  };
-  const snapToGrid = useMemo(() => createSnapModifier(gridSize), [gridSize]);
+  }
+  const snapToGrid = useMemo(() => createSnapModifier(gridSize), [gridSize])
 
   return (
     <>
@@ -260,12 +265,12 @@ export const SnapToGrid = () => {
       />
       <Grid size={gridSize} onSizeChange={setGridSize} />
     </>
-  );
-};
+  )
+}
 
 export const SnapCenterToCursor = () => (
   <DraggableStory
     label="When you grab me, my center will move to where the cursor is."
     modifiers={[snapCenterToCursor]}
   ></DraggableStory>
-);
+)
