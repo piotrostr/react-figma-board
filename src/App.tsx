@@ -10,7 +10,7 @@ import { updateSelectBox } from "./selectBoxSlice";
 
 function App() {
   const [dragActive, setDragActive] = useState(false);
-  const [selectBox, setSelectBox] = useState<SelectBox | null>(null);
+  const selectBox = useAppSelector((state) => state.selectBox);
   const contextMenuRef = useRef<HTMLDivElement>(null); // Ref to the context menu
   const draggableItemRefs = useRef<HTMLDivElement>([]); // Ref to the draggable items
   const selectBoxRef = useRef<HTMLDivElement>(null); // Ref to the select box
@@ -118,6 +118,7 @@ function App() {
         })
       );
     }
+    draggableItemRefs.current.push(ref);
   };
 
   const handleSetRef = (ref) => {
@@ -183,8 +184,7 @@ function App() {
                       index={i}
                       selectedItems={selectedItems}
                   />
-                  </div>
-                ))}
+                  <div>shift was pressed: {value} times</div>
                 </div>
               </TransformComponent>
             </>
