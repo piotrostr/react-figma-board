@@ -62,7 +62,6 @@ function App() {
   const handleMouseDown = (event: MouseEvent) => {
     handleCloseContextMenu();
     if (event.shiftKey) {
-      console.log("shift key down");
       setSelectBox({
         x: event.clientX,
         y: event.clientY,
