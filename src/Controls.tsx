@@ -16,5 +16,5 @@ export function Controls({ zoomIn, zoomOut, resetTransform }) {
       <button onClick={() => zoomOut()}>-</button>
       <button onClick={() => resetTransform()}>x</button>
     </div>
-  )
+  );
 }

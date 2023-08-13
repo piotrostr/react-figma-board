@@ -1,4 +1,4 @@
-import React, { useState } from "react"
+import React, { useState } from "react";
 import {
   DndContext,
   useDraggable,
@@ -9,32 +9,32 @@ import {
   PointerActivationConstraint,
   Modifiers,
   useSensors,
-} from "@dnd-kit/core"
+} from "@dnd-kit/core";
 
-import type { Coordinates } from "@dnd-kit/utilities"
+import type { Coordinates } from "@dnd-kit/utilities";
 
-import { Axis, Draggable, Wrapper } from "./components"
+import { Axis, Draggable, Wrapper } from "./components";
 
 export default {
   title: "Core/Draggable/Hooks/useDraggable",
-}
+};
 
 const defaultCoordinates = {
   x: 0,
   y: 0,
-}
+};
 
 interface Props {
-  activationConstraint?: PointerActivationConstraint
-  axis?: Axis
-  handle?: boolean
-  modifiers?: Modifiers
-  buttonStyle?: React.CSSProperties
-  style?: React.CSSProperties
-  label?: string
-  dragActive?: boolean
-  setDragActive?: (active: boolean) => void
-  scale: number
+  activationConstraint?: PointerActivationConstraint;
+  axis?: Axis;
+  handle?: boolean;
+  modifiers?: Modifiers;
+  buttonStyle?: React.CSSProperties;
+  style?: React.CSSProperties;
+  label?: string;
+  dragActive?: boolean;
+  setDragActive?: (active: boolean) => void;
+  scale: number;
 }
 
 export function DraggableStory({
@@ -51,32 +51,32 @@ export function DraggableStory({
   const [prevCoordinates, setPrevCoordinates] = useState<Coordinates>({
     x: 0,
     y: 0,
-  })
-  const [{ x, y }, setCoordinates] = useState<Coordinates>(defaultCoordinates)
+  });
+  const [{ x, y }, setCoordinates] = useState<Coordinates>(defaultCoordinates);
   const mouseSensor = useSensor(MouseSensor, {
     activationConstraint,
-  })
+  });
   const touchSensor = useSensor(TouchSensor, {
     activationConstraint,
-  })
-  const keyboardSensor = useSensor(KeyboardSensor, {})
-  const sensors = useSensors(mouseSensor, touchSensor, keyboardSensor)
+  });
+  const keyboardSensor = useSensor(KeyboardSensor, {});
+  const sensors = useSensors(mouseSensor, touchSensor, keyboardSensor);
 
   return (
     <DndContext
       sensors={sensors}
       onDragStart={() => {
-        setDragActive?.(true)
+        setDragActive?.(true);
       }}
       onDragMove={({ delta }) => {
         setCoordinates({
           x: Math.floor(prevCoordinates.x + delta.x / scale),
           y: Math.floor(prevCoordinates.y + delta.y / scale),
-        })
+        });
       }}
       onDragEnd={() => {
-        setPrevCoordinates({ x: x, y: y })
-        setDragActive?.(false)
+        setPrevCoordinates({ x: x, y: y });
+        setDragActive?.(false);
       }}
       modifiers={modifiers}
     >
@@ -92,17 +92,17 @@ export function DraggableStory({
         />
       </Wrapper>
     </DndContext>
-  )
+  );
 }
 
 interface DraggableItemProps {
-  label: string
-  handle?: boolean
-  style?: React.CSSProperties
-  buttonStyle?: React.CSSProperties
-  axis?: Axis
-  top?: number
-  left?: number
+  label: string;
+  handle?: boolean;
+  style?: React.CSSProperties;
+  buttonStyle?: React.CSSProperties;
+  axis?: Axis;
+  top?: number;
+  left?: number;
 }
 
 function DraggableItem({
@@ -117,7 +117,7 @@ function DraggableItem({
   const { attributes, isDragging, listeners, setNodeRef, transform } =
     useDraggable({
       id: "draggable",
-    })
+    });
 
   return (
     <Draggable
@@ -132,5 +132,5 @@ function DraggableItem({
       axis={axis}
       {...attributes}
     />
-  )
+  );
 }

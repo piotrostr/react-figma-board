@@ -1,14 +1,14 @@
-import { useState, useRef, useEffect } from "react"
-import { DndContext } from "@dnd-kit/core"
-import { TransformWrapper, TransformComponent } from "react-zoom-pan-pinch"
-import { DraggableStory } from "./DraggableItem"
-import { Controls } from "./Controls"
-import { ContextMenu } from "./components/ContextMenu"
+import { useState, useRef, useEffect } from "react";
+import { DndContext } from "@dnd-kit/core";
+import { TransformWrapper, TransformComponent } from "react-zoom-pan-pinch";
+import { DraggableStory } from "./DraggableItem";
+import { Controls } from "./Controls";
+import { ContextMenu } from "./components/ContextMenu";
 
 function App() {
-  const [dragActive, setDragActive] = useState(false)
-  const [selectBox, setSelectBox] = useState(null)
-  const contextMenuRef = useRef(null) // Ref to the context menu
+  const [dragActive, setDragActive] = useState(false);
+  const [selectBox, setSelectBox] = useState(null);
+  const contextMenuRef = useRef(null); // Ref to the context menu
 
   useEffect(() => {
     const handleKeyDown = (event) => {
@@ -18,51 +18,51 @@ function App() {
           y: event.clientY,
           width: 0,
           height: 0,
-        })
+        });
       }
-    }
+    };
     const handleKeyUp = (event) => {
       if (event.key === "Shift") {
-        setSelectBox(null)
+        setSelectBox(null);
       }
-    }
-    window.addEventListener("keydown", handleKeyDown)
-    window.addEventListener("keyup", handleKeyUp)
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    window.addEventListener("keyup", handleKeyUp);
     return () => {
-      window.removeEventListener("keydown", handleKeyDown)
-      window.removeEventListener("keyup", handleKeyUp)
-    }
-  }, [])
+      window.removeEventListener("keydown", handleKeyDown);
+      window.removeEventListener("keyup", handleKeyUp);
+    };
+  }, []);
 
   const handleContextMenu = (event) => {
-    event.preventDefault()
-    contextMenuRef.current.style.left = `${event.clientX}px`
-    contextMenuRef.current.style.top = `${event.clientY}px`
-    contextMenuRef.current.style.display = "block"
-  }
+    event.preventDefault();
+    contextMenuRef.current.style.left = `${event.clientX}px`;
+    contextMenuRef.current.style.top = `${event.clientY}px`;
+    contextMenuRef.current.style.display = "block";
+  };
 
   const handleCloseContextMenu = () => {
-    contextMenuRef.current.style.display = "none"
-  }
+    contextMenuRef.current.style.display = "none";
+  };
 
   const handleMouseDown = (event) => {
-    handleCloseContextMenu()
+    handleCloseContextMenu();
     if (event.shiftKey) {
-      console.log("shift key down")
+      console.log("shift key down");
       setSelectBox({
         x: event.clientX,
         y: event.clientY,
         width: 0,
         height: 0,
-      })
+      });
     }
-  }
+  };
 
   const handleMouseUp = () => {
     if (selectBox !== null) {
-      setSelectBox(null)
+      setSelectBox(null);
     }
-  }
+  };
 
   return (
     <div
@@ -75,7 +75,7 @@ function App() {
             ...selectBox,
             width: event.clientX - selectBox.x,
             height: event.clientY - selectBox.y,
-          })
+          });
         }
       }}
     >
@@ -135,7 +135,7 @@ function App() {
         />
       ) : null}
     </div>
-  )
+  );
 }
 
-export default App
+export default App;
