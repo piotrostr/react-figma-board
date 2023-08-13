@@ -1,4 +1,4 @@
-import React from "react"
+import React from "react";
 
 export const ContextMenu = React.forwardRef((props, ref) => {
   return (
@@ -22,10 +22,10 @@ export const ContextMenu = React.forwardRef((props, ref) => {
           }}
           onClick={() => console.log("Edit clicked")}
           onMouseEnter={(e) => {
-            e.target.style.backgroundColor = "#f1f1f1"
+            e.target.style.backgroundColor = "#f1f1f1";
           }}
           onMouseLeave={(e) => {
-            e.target.style.backgroundColor = "transparent"
+            e.target.style.backgroundColor = "transparent";
           }}
         >
           Edit
@@ -38,15 +38,15 @@ export const ContextMenu = React.forwardRef((props, ref) => {
           }}
           onClick={() => console.log("Delete clicked")}
           onMouseEnter={(e) => {
-            e.target.style.backgroundColor = "#f1f1f1"
+            e.target.style.backgroundColor = "#f1f1f1";
           }}
           onMouseLeave={(e) => {
-            e.target.style.backgroundColor = "transparent"
+            e.target.style.backgroundColor = "transparent";
           }}
         >
           Delete
         </li>
       </ul>
     </div>
-  )
-})
+  );
+});
