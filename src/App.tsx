@@ -110,7 +110,7 @@ function App() {
         </TransformWrapper>
       </DndContext>
       <ContextMenu ref={contextMenuRef} />
-      {selectBox !== null ? (
+      {selectBox !== null && !dragActive? (
         <div
           style={{
             position: "absolute",
