@@ -1,6 +1,6 @@
-import React, {forwardRef} from 'react';
+import React, { forwardRef } from "react";
 
-import {Action, ActionProps} from '../Action';
+import { Action, ActionProps } from "../Action";
 
 export const Handle = forwardRef<HTMLButtonElement, ActionProps>(
   (props, ref) => {
@@ -16,5 +16,5 @@ export const Handle = forwardRef<HTMLButtonElement, ActionProps>(
         </svg>
       </Action>
     );
-  }
+  },
 );

@@ -1,16 +1,16 @@
-import React, {forwardRef} from 'react';
-import classNames from 'classnames';
-import type {DraggableSyntheticListeners} from '@dnd-kit/core';
-import type {Transform} from '@dnd-kit/utilities';
+import React, { forwardRef } from "react";
+import classNames from "classnames";
+import type { DraggableSyntheticListeners } from "@dnd-kit/core";
+import type { Transform } from "@dnd-kit/utilities";
 
-import {Handle} from '../Item/components/Handle';
+import { Handle } from "../Item/components/Handle";
 
 import {
   draggable,
   draggableHorizontal,
   draggableVertical,
-} from './draggable-svg';
-import styles from './Draggable.module.css';
+} from "./draggable-svg";
+import styles from "./Draggable.module.css";
 
 export enum Axis {
   All,
@@ -44,7 +44,7 @@ export const Draggable = forwardRef<HTMLButtonElement, Props>(
       buttonStyle,
       ...props
     },
-    ref
+    ref,
   ) {
     return (
       <div
@@ -52,13 +52,13 @@ export const Draggable = forwardRef<HTMLButtonElement, Props>(
           styles.Draggable,
           dragOverlay && styles.dragOverlay,
           dragging && styles.dragging,
-          handle && styles.handle
+          handle && styles.handle,
         )}
         style={
           {
             ...style,
-            '--translate-x': `${transform?.x ?? 0}px`,
-            '--translate-y': `${transform?.y ?? 0}px`,
+            "--translate-x": `${transform?.x ?? 0}px`,
+            "--translate-y": `${transform?.y ?? 0}px`,
           } as React.CSSProperties
         }
       >
@@ -81,5 +81,5 @@ export const Draggable = forwardRef<HTMLButtonElement, Props>(
         {label ? <label>{label}</label> : null}
       </div>
     );
-  }
+  },
 );

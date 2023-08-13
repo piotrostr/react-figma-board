@@ -44,7 +44,7 @@ export const Draggable = forwardRef<HTMLButtonElement, Props>(
       buttonStyle,
       ...props
     },
-    ref
+    ref,
   ) {
     return (
       <div
@@ -52,7 +52,7 @@ export const Draggable = forwardRef<HTMLButtonElement, Props>(
           styles.Draggable,
           dragOverlay && styles.dragOverlay,
           dragging && styles.dragging,
-          handle && styles.handle
+          handle && styles.handle,
         )}
         style={
           {
@@ -81,5 +81,5 @@ export const Draggable = forwardRef<HTMLButtonElement, Props>(
         {label ? <label>{label}</label> : null}
       </div>
     );
-  }
+  },
 );
