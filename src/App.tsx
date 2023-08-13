@@ -4,6 +4,8 @@ import { TransformWrapper, TransformComponent } from "react-zoom-pan-pinch";
 import { DraggableStory } from "./DraggableItem";
 import { Controls } from "./Controls";
 import { ContextMenu } from "./components/ContextMenu";
+import { useAppDispatch, useAppSelector } from "./hooks";
+import { increment } from "./slice";
 
 interface SelectBox {
   x?: number;
@@ -17,30 +19,34 @@ function App() {
   const [selectBox, setSelectBox] = useState<SelectBox | null>(null);
   const contextMenuRef = useRef<HTMLDivElement>(null); // Ref to the context menu
 
-  // this uses the native KeyboardEvent, not the React KeyboardEvent
-  const handleKeyDown = (event: KeyboardEvent) => {
-    if (event.key === "Shift") {
-      setSelectBox({
-        width: 0,
-        height: 0,
-      });
-    }
-  };
-
-  const handleKeyUp = (event: KeyboardEvent) => {
-    if (event.key === "Shift") {
-      setSelectBox(null);
-    }
-  };
+  const value = useAppSelector((state) => state.counter.count);
+  const dispatch = useAppDispatch();
 
   useEffect(() => {
+    // this uses the native KeyboardEvent, not the React KeyboardEvent
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Shift") {
+        dispatch(increment());
+        setSelectBox({
+          width: 0,
+          height: 0,
+        });
+      }
+    };
+
+    const handleKeyUp = (event: KeyboardEvent) => {
+      if (event.key === "Shift") {
+        setSelectBox(null);
+      }
+    };
+
     window.addEventListener("keydown", handleKeyDown);
     window.addEventListener("keyup", handleKeyUp);
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
       window.removeEventListener("keyup", handleKeyUp);
     };
-  }, []);
+  }, [dispatch]);
 
   const handleContextMenu = (event: MouseEvent) => {
     event.preventDefault();
@@ -116,6 +122,7 @@ function App() {
                     setDragActive={setDragActive}
                     scale={utils.instance.transformState.scale}
                   />
+                  <div>shift was pressed: {value} times</div>
                 </div>
               </TransformComponent>
             </>
