@@ -6,17 +6,11 @@ import { Controls } from "./Controls";
 import { ContextMenu } from "./components/ContextMenu";
 import { useAppDispatch, useAppSelector } from "./hooks";
 import { increment } from "./slice";
-
-interface SelectBox {
-  x?: number;
-  y?: number;
-  width: number;
-  height: number;
-}
+import { updateSelectBox } from "./selectBoxSlice";
 
 function App() {
   const [dragActive, setDragActive] = useState(false);
-  const [selectBox, setSelectBox] = useState<SelectBox | null>(null);
+  const selectBox = useAppSelector((state) => state.selectBox);
   const contextMenuRef = useRef<HTMLDivElement>(null); // Ref to the context menu
 
   const value = useAppSelector((state) => state.counter.count);
@@ -27,16 +21,25 @@ function App() {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Shift") {
         dispatch(increment());
-        setSelectBox({
-          width: 0,
-          height: 0,
-        });
+        dispatch(
+          updateSelectBox({
+            active: true,
+          })
+        );
       }
     };
 
     const handleKeyUp = (event: KeyboardEvent) => {
       if (event.key === "Shift") {
-        setSelectBox(null);
+        dispatch(
+          updateSelectBox({
+            active: false,
+            width: 0,
+            height: 0,
+            x: undefined,
+            y: undefined,
+          })
+        );
       }
     };
 
@@ -68,18 +71,28 @@ function App() {
   const handleMouseDown = (event: MouseEvent) => {
     handleCloseContextMenu();
     if (event.shiftKey) {
-      setSelectBox({
-        x: event.clientX,
-        y: event.clientY,
-        width: 0,
-        height: 0,
-      });
+      dispatch(
+        updateSelectBox({
+          x: event.clientX,
+          y: event.clientY,
+          width: 0,
+          height: 0,
+        })
+      );
     }
   };
 
-  const handleMouseUp = () => {
-    if (selectBox !== null) {
-      setSelectBox(null);
+  const handleMouseUp = (event: MouseEvent) => {
+    if (!event.shiftKey) {
+      dispatch(
+        updateSelectBox({
+          active: false,
+          width: 0,
+          height: 0,
+          x: undefined,
+          y: undefined,
+        })
+      );
     }
   };
 
@@ -89,12 +102,13 @@ function App() {
       onMouseDown={handleMouseDown}
       onMouseUp={handleMouseUp}
       onMouseMove={(event) => {
-        if (selectBox !== null && selectBox.x && selectBox.y) {
-          setSelectBox({
-            ...selectBox,
-            width: event.clientX - selectBox.x,
-            height: event.clientY - selectBox.y,
-          });
+        if (selectBox.active && selectBox.x && selectBox.y) {
+          dispatch(
+            updateSelectBox({
+              width: event.clientX - selectBox.x,
+              height: event.clientY - selectBox.y,
+            })
+          );
         }
       }}
     >
@@ -104,7 +118,7 @@ function App() {
           limitToBounds={false}
           centerZoomedOut={false}
           disablePadding={true}
-          disabled={dragActive || selectBox !== null}
+          disabled={dragActive || selectBox.active}
           minScale={0.1}
           maxScale={10}
         >
@@ -130,7 +144,7 @@ function App() {
         </TransformWrapper>
       </DndContext>
       <ContextMenu ref={contextMenuRef} />
-      {selectBox !== null && selectBox.x && selectBox.y && !dragActive ? (
+      {selectBox.active && selectBox.x && selectBox.y && !dragActive ? (
         <div
           style={{
             position: "absolute",
