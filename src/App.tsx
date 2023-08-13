@@ -1,31 +1,39 @@
-import { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, MouseEvent } from "react";
 import { DndContext } from "@dnd-kit/core";
 import { TransformWrapper, TransformComponent } from "react-zoom-pan-pinch";
 import { DraggableStory } from "./DraggableItem";
 import { Controls } from "./Controls";
 import { ContextMenu } from "./components/ContextMenu";
 
+interface SelectBox {
+  x?: number;
+  y?: number;
+  width: number;
+  height: number;
+}
+
 function App() {
   const [dragActive, setDragActive] = useState(false);
-  const [selectBox, setSelectBox] = useState(null);
-  const contextMenuRef = useRef(null); // Ref to the context menu
+  const [selectBox, setSelectBox] = useState<SelectBox | null>(null);
+  const contextMenuRef = useRef<HTMLDivElement>(null); // Ref to the context menu
+
+  // this uses the native KeyboardEvent, not the React KeyboardEvent
+  const handleKeyDown = (event: KeyboardEvent) => {
+    if (event.key === "Shift") {
+      setSelectBox({
+        width: 0,
+        height: 0,
+      });
+    }
+  };
+
+  const handleKeyUp = (event: KeyboardEvent) => {
+    if (event.key === "Shift") {
+      setSelectBox(null);
+    }
+  };
 
   useEffect(() => {
-    const handleKeyDown = (event) => {
-      if (event.key === "Shift") {
-        setSelectBox({
-          x: event.clientX,
-          y: event.clientY,
-          width: 0,
-          height: 0,
-        });
-      }
-    };
-    const handleKeyUp = (event) => {
-      if (event.key === "Shift") {
-        setSelectBox(null);
-      }
-    };
     window.addEventListener("keydown", handleKeyDown);
     window.addEventListener("keyup", handleKeyUp);
     return () => {
@@ -34,18 +42,24 @@ function App() {
     };
   }, []);
 
-  const handleContextMenu = (event) => {
+  const handleContextMenu = (event: MouseEvent) => {
     event.preventDefault();
+    if (contextMenuRef.current === null) {
+      return;
+    }
     contextMenuRef.current.style.left = `${event.clientX}px`;
     contextMenuRef.current.style.top = `${event.clientY}px`;
     contextMenuRef.current.style.display = "block";
   };
 
   const handleCloseContextMenu = () => {
+    if (contextMenuRef.current === null) {
+      return;
+    }
     contextMenuRef.current.style.display = "none";
   };
 
-  const handleMouseDown = (event) => {
+  const handleMouseDown = (event: MouseEvent) => {
     handleCloseContextMenu();
     if (event.shiftKey) {
       console.log("shift key down");
@@ -70,7 +84,7 @@ function App() {
       onMouseDown={handleMouseDown}
       onMouseUp={handleMouseUp}
       onMouseMove={(event) => {
-        if (selectBox !== null) {
+        if (selectBox !== null && selectBox.x && selectBox.y) {
           setSelectBox({
             ...selectBox,
             width: event.clientX - selectBox.x,
@@ -110,7 +124,7 @@ function App() {
         </TransformWrapper>
       </DndContext>
       <ContextMenu ref={contextMenuRef} />
-      {selectBox !== null && !dragActive? (
+      {selectBox !== null && selectBox.x && selectBox.y && !dragActive ? (
         <div
           style={{
             position: "absolute",
@@ -119,16 +133,16 @@ function App() {
               selectBox.width < 0 ? selectBox.x + selectBox.width : selectBox.x,
             right:
               selectBox.width > 0
-                ? `calc(100% - ${selectBox.x + selectBox.width}px)`
-                : null,
+                ? `calc(100% - ${selectBox!.x + selectBox.width}px)`
+                : "",
             top:
               selectBox.height < 0
                 ? selectBox.y + selectBox.height
                 : selectBox.y,
             bottom:
               selectBox.height > 0
-                ? `calc(100% - ${selectBox.y + selectBox.height}px)`
-                : null,
+                ? `calc(100% - ${selectBox!.y + selectBox.height}px)`
+                : "",
             width: Math.abs(selectBox.width),
             height: Math.abs(selectBox.height),
           }}
