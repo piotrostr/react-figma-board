@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, MouseEvent } from "react";
-import { DndContext, useDraggable } from "@dnd-kit/core";
+import { DndContext } from "@dnd-kit/core";
 import { TransformWrapper, TransformComponent } from "react-zoom-pan-pinch";
 import { DraggableStory } from "./DraggableItem";
 import { Controls } from "./Controls";
@@ -12,8 +12,9 @@ function App() {
   const [dragActive, setDragActive] = useState(false);
   const selectBox = useAppSelector((state) => state.selectBox);
   const contextMenuRef = useRef<HTMLDivElement>(null); // Ref to the context menu
-  const draggableItemRefs = useRef<HTMLDivElement>([]); // Ref to the draggable items
+  const draggableItemRefs = useRef<Array<HTMLDivElement>>([]); // Ref to the draggable items
   const selectBoxRef = useRef<HTMLDivElement>(null); // Ref to the select box
+  const [selectedItems, setSelectedItems] = useState<Array<string>>([]); // Ref to the selected items
 
   const value = useAppSelector((state) => state.counter.count);
   const dispatch = useAppDispatch();
@@ -26,7 +27,7 @@ function App() {
         dispatch(
           updateSelectBox({
             active: true,
-          })
+          }),
         );
       }
     };
@@ -40,7 +41,7 @@ function App() {
             height: 0,
             x: undefined,
             y: undefined,
-          })
+          }),
         );
       }
     };
@@ -80,34 +81,33 @@ function App() {
           y: event.clientY,
           width: 0,
           height: 0,
-        })
+        }),
       );
     }
   };
 
   const handleMouseUp = (event: MouseEvent) => {
     if (!event.shiftKey) {
-      const selectedItems = []
-       draggableItemRefs.current.forEach((item) => {
-        const itemElem = item.current;
-        console.log("itemElem", item)
-        if (itemElem === null) {
-          return false;
+      const _selectedItems: Array<string> = [];
+      draggableItemRefs.current.forEach((itemElem) => {
+        if (itemElem === null || selectBoxRef.current === null) {
+          return;
         }
         const itemRect = itemElem.getBoundingClientRect();
-        const selectBoxRect = selectBoxRef.current?.getBoundingClientRect();
-        const isInBox = (
+        const selectBoxRect = selectBoxRef.current.getBoundingClientRect();
+        if (selectBoxRect === undefined) {
+          return;
+        }
+        const isInBox =
           itemRect.left > selectBoxRect?.left &&
           itemRect.right < selectBoxRect?.right &&
           itemRect.top > selectBoxRect?.top &&
-          itemRect.bottom < selectBoxRect?.bottom
-        )
+          itemRect.bottom < selectBoxRect?.bottom;
         if (isInBox) {
-          selectedItems.push(itemElem.id);
+          _selectedItems.push(itemElem.id);
         }
-      }
-      );
-      setSelectedItems(selectedItems);
+      });
+      setSelectedItems(_selectedItems);
       dispatch(
         updateSelectBox({
           active: false,
@@ -115,22 +115,14 @@ function App() {
           height: 0,
           x: undefined,
           y: undefined,
-        })
+        }),
       );
     }
-    draggableItemRefs.current.push(ref);
   };
 
-  const handleSetRef = (ref) => {
+  const handleSetRef = (ref: HTMLDivElement) => {
     if (ref === null || draggableItemRefs.current.includes(ref)) {
-      return; 
-    }
-    draggableItemRefs.current.push(ref);
-  };
-
-  const handleSetRef = (ref) => {
-    if (ref === null || draggableItemRefs.current.includes(ref)) {
-      return; 
+      return;
     }
     draggableItemRefs.current.push(ref);
   };
@@ -146,7 +138,7 @@ function App() {
             updateSelectBox({
               width: event.clientX - selectBox.x,
               height: event.clientY - selectBox.y,
-            })
+            }),
           );
         }
       }}
@@ -171,20 +163,27 @@ function App() {
                     height: "100vh",
                   }}
                 >
-                {Array.from(Array(5).keys()).map((i) => (
-                  <div
-                    key={i}
-                    id={`draggable-item-${i}`}
-                    style={{width: "fit-content", border: selectedItems.includes(`draggable-item-${i}`) ? "1px solid red" : "none"}}
-                  >
-                    <DraggableStory
-                      setDragActive={setDragActive}
-                      scale={utils.instance.transformState.scale}
-                      setRefs={handleSetRef}
-                      index={i}
-                      selectedItems={selectedItems}
-                  />
-                  <div>shift was pressed: {value} times</div>
+                  {Array.from(Array(5).keys()).map((i) => (
+                    <div
+                      key={i}
+                      id={`draggable-item-${i}`}
+                      style={{
+                        width: "fit-content",
+                        border: selectedItems.includes(`draggable-item-${i}`)
+                          ? "1px solid red"
+                          : "none",
+                      }}
+                    >
+                      <DraggableStory
+                        setDragActive={setDragActive}
+                        scale={utils.instance.transformState.scale}
+                        setRefs={handleSetRef}
+                        index={i}
+                        selectedItems={selectedItems}
+                      />
+                      <div>shift was pressed: {value} times</div>
+                    </div>
+                  ))}
                 </div>
               </TransformComponent>
             </>
