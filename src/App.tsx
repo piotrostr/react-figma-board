@@ -1,46 +1,57 @@
 import React, { useState, useRef, useEffect, MouseEvent } from "react";
-import { DndContext } from "@dnd-kit/core";
+import { DndContext, useDraggable } from "@dnd-kit/core";
 import { TransformWrapper, TransformComponent } from "react-zoom-pan-pinch";
 import { DraggableStory } from "./DraggableItem";
 import { Controls } from "./Controls";
 import { ContextMenu } from "./components/ContextMenu";
-
-interface SelectBox {
-  x?: number;
-  y?: number;
-  width: number;
-  height: number;
-}
+import { useAppDispatch, useAppSelector } from "./hooks";
+import { increment } from "./slice";
+import { updateSelectBox } from "./selectBoxSlice";
 
 function App() {
   const [dragActive, setDragActive] = useState(false);
   const [selectBox, setSelectBox] = useState<SelectBox | null>(null);
   const contextMenuRef = useRef<HTMLDivElement>(null); // Ref to the context menu
+  const draggableItemRefs = useRef<HTMLDivElement>([]); // Ref to the draggable items
+  const selectBoxRef = useRef<HTMLDivElement>(null); // Ref to the select box
 
-  // this uses the native KeyboardEvent, not the React KeyboardEvent
-  const handleKeyDown = (event: KeyboardEvent) => {
-    if (event.key === "Shift") {
-      setSelectBox({
-        width: 0,
-        height: 0,
-      });
-    }
-  };
-
-  const handleKeyUp = (event: KeyboardEvent) => {
-    if (event.key === "Shift") {
-      setSelectBox(null);
-    }
-  };
+  const value = useAppSelector((state) => state.counter.count);
+  const dispatch = useAppDispatch();
 
   useEffect(() => {
+    // this uses the native KeyboardEvent, not the React KeyboardEvent
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Shift") {
+        dispatch(increment());
+        dispatch(
+          updateSelectBox({
+            active: true,
+          })
+        );
+      }
+    };
+
+    const handleKeyUp = (event: KeyboardEvent) => {
+      if (event.key === "Shift") {
+        dispatch(
+          updateSelectBox({
+            active: false,
+            width: 0,
+            height: 0,
+            x: undefined,
+            y: undefined,
+          })
+        );
+      }
+    };
+
     window.addEventListener("keydown", handleKeyDown);
     window.addEventListener("keyup", handleKeyUp);
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
       window.removeEventListener("keyup", handleKeyUp);
     };
-  }, []);
+  }, [dispatch]);
 
   const handleContextMenu = (event: MouseEvent) => {
     event.preventDefault();
@@ -61,20 +72,66 @@ function App() {
 
   const handleMouseDown = (event: MouseEvent) => {
     handleCloseContextMenu();
+    setSelectedItems([]);
     if (event.shiftKey) {
-      setSelectBox({
-        x: event.clientX,
-        y: event.clientY,
-        width: 0,
-        height: 0,
-      });
+      dispatch(
+        updateSelectBox({
+          x: event.clientX,
+          y: event.clientY,
+          width: 0,
+          height: 0,
+        })
+      );
     }
   };
 
-  const handleMouseUp = () => {
-    if (selectBox !== null) {
-      setSelectBox(null);
+  const handleMouseUp = (event: MouseEvent) => {
+    if (!event.shiftKey) {
+      const selectedItems = []
+       draggableItemRefs.current.forEach((item) => {
+        const itemElem = item.current;
+        console.log("itemElem", item)
+        if (itemElem === null) {
+          return false;
+        }
+        const itemRect = itemElem.getBoundingClientRect();
+        const selectBoxRect = selectBoxRef.current?.getBoundingClientRect();
+        const isInBox = (
+          itemRect.left > selectBoxRect?.left &&
+          itemRect.right < selectBoxRect?.right &&
+          itemRect.top > selectBoxRect?.top &&
+          itemRect.bottom < selectBoxRect?.bottom
+        )
+        if (isInBox) {
+          selectedItems.push(itemElem.id);
+        }
+      }
+      );
+      setSelectedItems(selectedItems);
+      dispatch(
+        updateSelectBox({
+          active: false,
+          width: 0,
+          height: 0,
+          x: undefined,
+          y: undefined,
+        })
+      );
     }
+  };
+
+  const handleSetRef = (ref) => {
+    if (ref === null || draggableItemRefs.current.includes(ref)) {
+      return; 
+    }
+    draggableItemRefs.current.push(ref);
+  };
+
+  const handleSetRef = (ref) => {
+    if (ref === null || draggableItemRefs.current.includes(ref)) {
+      return; 
+    }
+    draggableItemRefs.current.push(ref);
   };
 
   return (
@@ -83,12 +140,13 @@ function App() {
       onMouseDown={handleMouseDown}
       onMouseUp={handleMouseUp}
       onMouseMove={(event) => {
-        if (selectBox !== null && selectBox.x && selectBox.y) {
-          setSelectBox({
-            ...selectBox,
-            width: event.clientX - selectBox.x,
-            height: event.clientY - selectBox.y,
-          });
+        if (selectBox.active && selectBox.x && selectBox.y) {
+          dispatch(
+            updateSelectBox({
+              width: event.clientX - selectBox.x,
+              height: event.clientY - selectBox.y,
+            })
+          );
         }
       }}
     >
@@ -98,7 +156,7 @@ function App() {
           limitToBounds={false}
           centerZoomedOut={false}
           disablePadding={true}
-          disabled={dragActive || selectBox !== null}
+          disabled={dragActive || selectBox.active}
           minScale={0.1}
           maxScale={10}
         >
@@ -112,10 +170,21 @@ function App() {
                     height: "100vh",
                   }}
                 >
-                  <DraggableStory
-                    setDragActive={setDragActive}
-                    scale={utils.instance.transformState.scale}
+                {Array.from(Array(5).keys()).map((i) => (
+                  <div
+                    key={i}
+                    id={`draggable-item-${i}`}
+                    style={{width: "fit-content", border: selectedItems.includes(`draggable-item-${i}`) ? "1px solid red" : "none"}}
+                  >
+                    <DraggableStory
+                      setDragActive={setDragActive}
+                      scale={utils.instance.transformState.scale}
+                      setRefs={handleSetRef}
+                      index={i}
+                      selectedItems={selectedItems}
                   />
+                  </div>
+                ))}
                 </div>
               </TransformComponent>
             </>
@@ -123,8 +192,9 @@ function App() {
         </TransformWrapper>
       </DndContext>
       <ContextMenu ref={contextMenuRef} />
-      {selectBox !== null && selectBox.x && selectBox.y && !dragActive ? (
+      {selectBox.active && selectBox.x && selectBox.y && !dragActive ? (
         <div
+          ref={selectBoxRef}
           style={{
             position: "absolute",
             border: "1px solid red",

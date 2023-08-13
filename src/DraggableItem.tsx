@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   DndContext,
   useDraggable,
@@ -35,6 +35,9 @@ interface Props {
   dragActive?: boolean;
   setDragActive?: (active: boolean) => void;
   scale: number;
+  setRefs?: (ref: any) => void;
+  index?: number;
+  selectedItems?: string[];
 }
 
 export function DraggableStory({
@@ -47,6 +50,9 @@ export function DraggableStory({
   buttonStyle,
   setDragActive,
   scale,
+  setRefs,
+  index,
+  selectedItems,
 }: Props) {
   const [prevCoordinates, setPrevCoordinates] = useState<Coordinates>({
     x: 0,
@@ -89,6 +95,9 @@ export function DraggableStory({
           left={x}
           style={style}
           buttonStyle={buttonStyle}
+          setRefs={setRefs}
+          index={index}
+          selectedItems={selectedItems}
         />
       </Wrapper>
     </DndContext>
@@ -103,6 +112,9 @@ interface DraggableItemProps {
   axis?: Axis;
   top?: number;
   left?: number;
+  setRefs?: (ref: any) => void;
+  index?: number;
+  selectedItems?: string[];
 }
 
 function DraggableItem({
@@ -113,14 +125,23 @@ function DraggableItem({
   left,
   handle,
   buttonStyle,
+  setRefs,
+  index,
+  selectedItems,
 }: DraggableItemProps) {
-  const { attributes, isDragging, listeners, setNodeRef, transform } =
+  const { attributes, isDragging, listeners, setNodeRef, transform, node } =
     useDraggable({
       id: "draggable",
     });
 
+
+  useEffect(() => {
+    setRefs?.(node);
+  }, [node, setRefs])
+
   return (
     <Draggable
+      id={`draggable-${index}`}
       ref={setNodeRef}
       dragging={isDragging}
       handle={handle}
@@ -130,6 +151,7 @@ function DraggableItem({
       buttonStyle={buttonStyle}
       transform={transform}
       axis={axis}
+      selectedItems={selectedItems}
       {...attributes}
     />
   );

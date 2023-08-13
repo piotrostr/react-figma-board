@@ -26,11 +26,13 @@ interface Props {
   style?: React.CSSProperties;
   buttonStyle?: React.CSSProperties;
   transform?: Transform | null;
+  selectedItems?: string[];
 }
 
 export const Draggable = forwardRef<HTMLButtonElement, Props>(
   function Draggable(
     {
+      id,
       axis,
       dragOverlay,
       dragging,
@@ -40,6 +42,7 @@ export const Draggable = forwardRef<HTMLButtonElement, Props>(
       transform,
       style,
       buttonStyle,
+      selectedItems,
       ...props
     },
     ref,
@@ -61,6 +64,7 @@ export const Draggable = forwardRef<HTMLButtonElement, Props>(
         }
       >
         <button
+          id={id}
           {...props}
           aria-label="Draggable"
           data-cypress="draggable-item"
@@ -70,6 +74,7 @@ export const Draggable = forwardRef<HTMLButtonElement, Props>(
           style={{
             ...buttonStyle,
             cursor: !dragging ? "grab" : "grabbing",
+            border: selectedItems?.includes(id) ? "1px solid red" : "none",
           }}
         >
           {axis === Axis.Vertical
