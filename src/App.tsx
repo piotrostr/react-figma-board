@@ -1,139 +1,141 @@
-import { useState } from "react";
-
-import { useControls } from "react-zoom-pan-pinch";
-import { ReactZoomPanPinchState } from "react-zoom-pan-pinch";
-import { useTransformContext } from "react-zoom-pan-pinch";
-import { useTransformEffect } from "react-zoom-pan-pinch";
-import { TransformWrapper, TransformComponent } from "react-zoom-pan-pinch";
-
-import { DndContext, useDndContext } from "@dnd-kit/core";
-
-import { BasicSetup as DraggableStory } from "./DraggableStory.tsx";
-import { useDraggable } from "@dnd-kit/core";
+import { useState, useRef, useEffect } from "react"
+import { DndContext } from "@dnd-kit/core"
+import { TransformWrapper, TransformComponent } from "react-zoom-pan-pinch"
+import { DraggableStory } from "./DraggableItem"
+import { Controls } from "./Controls"
+import { ContextMenu } from "./components/ContextMenu"
 
 function App() {
-  // the base id of the draggable element is 'draggable'
-  const { active, isDragging } = useDraggable({ id: "draggable" });
-  console.log(active, isDragging);
+  const [dragActive, setDragActive] = useState(false)
+  const [selectBox, setSelectBox] = useState(null)
+  const contextMenuRef = useRef(null) // Ref to the context menu
 
-  const context = useDndContext();
-  console.log(context);
+  useEffect(() => {
+    const handleKeyDown = (event) => {
+      if (event.key === "Shift") {
+        setSelectBox({
+          x: event.clientX,
+          y: event.clientY,
+          width: 0,
+          height: 0,
+        })
+      }
+    }
+    const handleKeyUp = (event) => {
+      if (event.key === "Shift") {
+        setSelectBox(null)
+      }
+    }
+    window.addEventListener("keydown", handleKeyDown)
+    window.addEventListener("keyup", handleKeyUp)
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown)
+      window.removeEventListener("keyup", handleKeyUp)
+    }
+  }, [])
 
-  // TODO I can't access the `id: "draggable"`,
-  // it might be an issue with the DndContext not being available
-  // in this top level component
-  //
-  // the context logs out as empty, nothing happens on dragging of the DraggableStory
-  // the DndContext from that component has to be moved here,
-  // the core of the DraggableStory is the DraggableItem which shall
-  // be the base for the parent Draggable class to be used throughout the project
+  const handleContextMenu = (event) => {
+    event.preventDefault()
+    contextMenuRef.current.style.left = `${event.clientX}px`
+    contextMenuRef.current.style.top = `${event.clientY}px`
+    contextMenuRef.current.style.display = "block"
+  }
 
-  const children = (
-    <>
-      <TransformComponent>
-        <div
-          style={{
-            width: "100vw",
-            height: "100vh",
-            backgroundColor: "gray",
-          }}
-        ></div>
-        <DraggableStory />
-      </TransformComponent>
-      <Sidebar />
-    </>
-  );
+  const handleCloseContextMenu = () => {
+    contextMenuRef.current.style.display = "none"
+  }
 
-  return (
-    <DndContext
-      onDragStart={(event) => {
-        console.log(event);
-      }}
-    >
-      {isDragging ? (
-        <TransformWrapper
-          initialScale={0.3}
-          limitToBounds={false}
-          centerZoomedOut={false}
-          disablePadding={true}
-          disabled={true}
-        >
-          {children}
-        </TransformWrapper>
-      ) : (
-        <TransformWrapper
-          initialScale={0.3}
-          limitToBounds={false}
-          centerZoomedOut={false}
-          disablePadding={true}
-        >
-          {children}
-        </TransformWrapper>
-      )}
-    </DndContext>
-  );
-}
+  const handleMouseDown = (event) => {
+    handleCloseContextMenu()
+    if (event.shiftKey) {
+      console.log("shift key down")
+      setSelectBox({
+        x: event.clientX,
+        y: event.clientY,
+        width: 0,
+        height: 0,
+      })
+    }
+  }
 
-function Sidebar() {
-  const { setTransform, resetTransform } = useControls();
-  const [state, setState] = useState<ReactZoomPanPinchState>({
-    positionX: 0,
-    positionY: 0,
-    scale: 1,
-    previousScale: 1,
-  });
-
-  const context = useTransformContext();
-  context.onWheelZoom = (e) => {
-    handleScroll(e);
-  };
-
-  const handleZoomIn = (step: number = 0.1) => {
-    setTransform(state.positionX, state.positionY, state.scale + step);
-  };
-
-  const handleZoomOut = (step: number = 0.1) => {
-    setTransform(state.positionX, state.positionY, state.scale - step);
-  };
-
-  const handleReset = () => {
-    resetTransform();
-  };
-
-  const handleScroll = (e: WheelEvent) => {
-    // TODO make sure this is right, positionX and positionY might require updating
-    console.log(e);
-    e.preventDefault();
-    e.stopPropagation();
-    const { deltaY } = e;
-    const { scale } = state;
-    const newScale = scale - deltaY * 0.01;
-    setTransform(state.positionX, state.positionY, newScale);
-  };
-
-  useTransformEffect(({ state }) => {
-    setState(state);
-    return () => {};
-  });
+  const handleMouseUp = () => {
+    if (selectBox !== null) {
+      setSelectBox(null)
+    }
+  }
 
   return (
     <div
-      style={{
-        position: "absolute",
-        top: 50,
-        left: 50,
-        zIndex: 100,
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        justifyContent: "center",
+      onContextMenu={handleContextMenu}
+      onMouseDown={handleMouseDown}
+      onMouseUp={handleMouseUp}
+      onMouseMove={(event) => {
+        if (selectBox !== null) {
+          setSelectBox({
+            ...selectBox,
+            width: event.clientX - selectBox.x,
+            height: event.clientY - selectBox.y,
+          })
+        }
       }}
     >
-      <button onClick={() => handleZoomIn()}>+</button>
-      <button onClick={() => handleZoomOut()}>-</button>
-      <button onClick={() => handleReset()}>x</button>
+      <DndContext>
+        <TransformWrapper
+          initialScale={1}
+          limitToBounds={false}
+          centerZoomedOut={false}
+          disablePadding={true}
+          disabled={dragActive || selectBox !== null}
+          minScale={0.1}
+          maxScale={10}
+        >
+          {(utils) => (
+            <>
+              <Controls {...utils} />
+              <TransformComponent>
+                <div
+                  style={{
+                    width: "100vw",
+                    height: "100vh",
+                  }}
+                >
+                  <DraggableStory
+                    setDragActive={setDragActive}
+                    scale={utils.instance.transformState.scale}
+                  />
+                </div>
+              </TransformComponent>
+            </>
+          )}
+        </TransformWrapper>
+      </DndContext>
+      <ContextMenu ref={contextMenuRef} />
+      {selectBox !== null ? (
+        <div
+          style={{
+            position: "absolute",
+            border: "1px solid red",
+            left:
+              selectBox.width < 0 ? selectBox.x + selectBox.width : selectBox.x,
+            right:
+              selectBox.width > 0
+                ? `calc(100% - ${selectBox.x + selectBox.width}px)`
+                : null,
+            top:
+              selectBox.height < 0
+                ? selectBox.y + selectBox.height
+                : selectBox.y,
+            bottom:
+              selectBox.height > 0
+                ? `calc(100% - ${selectBox.y + selectBox.height}px)`
+                : null,
+            width: Math.abs(selectBox.width),
+            height: Math.abs(selectBox.height),
+          }}
+        />
+      ) : null}
     </div>
-  );
+  )
 }
 
-export default App;
+export default App
