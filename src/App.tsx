@@ -7,14 +7,10 @@ import { ContextMenu } from "./components/ContextMenu";
 import { useAppDispatch, useAppSelector } from "./hooks";
 import { increment } from "./slice";
 import { updateSelectBox } from "./selectBoxSlice";
-import {
-  selectItems,
-  deselectItems,
-  clearSelectedItems,
-} from "./selectedItemsSlice";
+import { selectItems, clearSelectedItems } from "./selectedItemsSlice";
 
 function App() {
-  const [dragActive, setDragActive] = useState(false);
+  const drag = useAppSelector((state) => state.drag);
   const selectBox = useAppSelector((state) => state.selectBox);
   const contextMenuRef = useRef<HTMLDivElement>(null); // Ref to the context menu
   const selectBoxRef = useRef<HTMLDivElement>(null); // Ref to the select box
@@ -154,7 +150,7 @@ function App() {
           limitToBounds={false}
           centerZoomedOut={false}
           disablePadding={true}
-          disabled={dragActive || selectBox.active}
+          disabled={drag.active || selectBox.active}
           minScale={0.1}
           maxScale={10}
         >
@@ -180,8 +176,6 @@ function App() {
                       }}
                     >
                       <DraggableStory
-                        dragActive={dragActive}
-                        setDragActive={setDragActive}
                         scale={utils.instance.transformState.scale}
                         index={i}
                       />
@@ -194,7 +188,7 @@ function App() {
         </TransformWrapper>
       </DndContext>
       <ContextMenu ref={contextMenuRef} />
-      {selectBox.active && selectBox.x && selectBox.y && !dragActive ? (
+      {selectBox.active && selectBox.x && selectBox.y && !drag.active ? (
         <div
           ref={selectBoxRef}
           style={{

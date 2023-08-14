@@ -4,6 +4,7 @@ import { slice as selectBox } from "./selectBoxSlice";
 import { slice as draggableRefs } from "./draggableRefsSlice";
 import { slice as delta } from "./deltaSlice";
 import { slice as selectedItems } from "./selectedItemsSlice";
+import { slice as drag } from "./dragSlice";
 
 export const store = configureStore({
   reducer: {
@@ -12,6 +13,7 @@ export const store = configureStore({
     draggableRefs: draggableRefs.reducer,
     delta: delta.reducer,
     selectedItems: selectedItems.reducer,
+    drag: drag.reducer,
   },
 });
 

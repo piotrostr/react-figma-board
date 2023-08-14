@@ -18,6 +18,7 @@ import { useAppDispatch, useAppSelector } from "./hooks";
 import { updateDraggableRefs } from "./draggableRefsSlice";
 import { setDelta } from "./deltaSlice";
 import { clearSelectedItems } from "./selectedItemsSlice";
+import { setDragActive } from "./dragSlice";
 
 export default {
   title: "Core/Draggable/Hooks/useDraggable",
@@ -36,8 +37,6 @@ interface Props {
   buttonStyle?: React.CSSProperties;
   style?: React.CSSProperties;
   label?: string;
-  dragActive?: boolean;
-  setDragActive?: (active: boolean) => void;
   scale: number;
   index?: number;
 }
@@ -50,8 +49,6 @@ export function DraggableStory({
   modifiers,
   style,
   buttonStyle,
-  dragActive,
-  setDragActive,
   scale,
   index,
 }: Props) {
@@ -71,13 +68,14 @@ export function DraggableStory({
 
   const dispatch = useAppDispatch();
   const delta = useAppSelector((state) => state.delta);
+  const drag = useAppSelector((state) => state.drag);
 
   const selectedItems = useAppSelector(
     (state) => state.selectedItems.selectedItems,
   );
 
   const handleDragStart = () => {
-    setDragActive?.(true);
+    dispatch(setDragActive(true));
     if (!selectedItems?.includes(`draggable-${index}`)) {
       dispatch(clearSelectedItems());
     }
@@ -94,19 +92,19 @@ export function DraggableStory({
   const handleDragEnd = () => {
     dispatch(setDelta({ x: 0, y: 0 }));
     setPrevCoordinates({ x, y });
-    setDragActive?.(false);
+    dispatch(setDragActive(false));
   };
 
   useEffect(() => {
-    if (dragActive && selectedItems?.includes(`draggable-${index}`)) {
+    if (drag.active && selectedItems?.includes(`draggable-${index}`)) {
       setCoordinates({
         x: Math.floor(prevCoordinates.x + delta.x / scale),
         y: Math.floor(prevCoordinates.y + delta.y / scale),
       });
-    } else if (!dragActive && selectedItems?.includes(`draggable-${index}`)) {
+    } else if (!drag.active && selectedItems?.includes(`draggable-${index}`)) {
       setPrevCoordinates({ x, y });
     }
-  }, [delta, dragActive, selectedItems, index, prevCoordinates, scale, x, y]);
+  }, [delta, drag, selectedItems, index, prevCoordinates, scale, x, y]);
 
   return (
     <DndContext
