@@ -21,7 +21,6 @@ export const slice = createSlice({
   initialState,
   reducers: {
     updateSelectBox: (state, action) => {
-      console.log("updateSelectBox", action.payload);
       return { ...state, ...action.payload };
     },
   },

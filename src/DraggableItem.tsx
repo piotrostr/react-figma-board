@@ -14,6 +14,8 @@ import {
 import type { Coordinates } from "@dnd-kit/utilities";
 
 import { Axis, Draggable, Wrapper } from "./components";
+import { useAppDispatch } from "./hooks";
+import { updateDraggableRefs } from "./draggableRefsSlice";
 
 export default {
   title: "Core/Draggable/Hooks/useDraggable",
@@ -35,9 +37,11 @@ interface Props {
   dragActive?: boolean;
   setDragActive?: (active: boolean) => void;
   scale: number;
-  setRefs?: (ref: any) => void;
   index?: number;
   selectedItems?: string[];
+  setSelectedItems?: (items: string[]) => void;
+  delta?: Coordinates;
+  setDelta?: (delta: Coordinates) => void;
 }
 
 export function DraggableStory({
@@ -48,11 +52,14 @@ export function DraggableStory({
   modifiers,
   style,
   buttonStyle,
+  dragActive,
   setDragActive,
   scale,
-  setRefs,
   index,
   selectedItems,
+  setSelectedItems,
+  delta,
+  setDelta,
 }: Props) {
   const [prevCoordinates, setPrevCoordinates] = useState<Coordinates>({
     x: 0,
@@ -68,22 +75,44 @@ export function DraggableStory({
   const keyboardSensor = useSensor(KeyboardSensor, {});
   const sensors = useSensors(mouseSensor, touchSensor, keyboardSensor);
 
+  const handleDragStart = () => {
+    setDragActive?.(true);
+    if (!selectedItems?.includes(`draggable-${index}`)) {
+      setSelectedItems?.([]);
+    }
+  };
+
+  const handleDragMove = ({ delta }: { delta: Coordinates }) => {
+    setDelta?.(delta);
+    setCoordinates({
+      x: Math.floor(prevCoordinates.x + delta.x / scale),
+      y: Math.floor(prevCoordinates.y + delta.y / scale),
+    });
+  };
+
+  const handleDragEnd = () => {
+    setDelta?.({ x: 0, y: 0 });
+    setPrevCoordinates({ x, y });
+    setDragActive?.(false);
+  };
+
+  useEffect(() => {
+    if (dragActive && selectedItems?.includes(`draggable-${index}`)) {
+      setCoordinates({
+        x: Math.floor(prevCoordinates.x + delta.x / scale),
+        y: Math.floor(prevCoordinates.y + delta.y / scale),
+      });
+    } else if (!dragActive && selectedItems?.includes(`draggable-${index}`)) {
+      setPrevCoordinates({ x, y });
+    }
+  }, [delta, dragActive, selectedItems]);
+
   return (
     <DndContext
       sensors={sensors}
-      onDragStart={() => {
-        setDragActive?.(true);
-      }}
-      onDragMove={({ delta }) => {
-        setCoordinates({
-          x: Math.floor(prevCoordinates.x + delta.x / scale),
-          y: Math.floor(prevCoordinates.y + delta.y / scale),
-        });
-      }}
-      onDragEnd={() => {
-        setPrevCoordinates({ x: x, y: y });
-        setDragActive?.(false);
-      }}
+      onDragStart={handleDragStart}
+      onDragMove={handleDragMove}
+      onDragEnd={handleDragEnd}
       modifiers={modifiers}
     >
       <Wrapper>
@@ -95,7 +124,6 @@ export function DraggableStory({
           left={x}
           style={style}
           buttonStyle={buttonStyle}
-          setRefs={setRefs}
           index={index}
           selectedItems={selectedItems}
         />
@@ -112,7 +140,6 @@ interface DraggableItemProps {
   axis?: Axis;
   top?: number;
   left?: number;
-  setRefs?: (ref: any) => void;
   index?: number;
   selectedItems?: string[];
 }
@@ -125,7 +152,6 @@ function DraggableItem({
   left,
   handle,
   buttonStyle,
-  setRefs,
   index,
   selectedItems,
 }: DraggableItemProps) {
@@ -133,11 +159,11 @@ function DraggableItem({
     useDraggable({
       id: "draggable",
     });
-
+  const dispatch = useAppDispatch();
 
   useEffect(() => {
-    setRefs?.(node);
-  }, [node, setRefs])
+    dispatch(updateDraggableRefs(node.current));
+  }, [dispatch, node]);
 
   return (
     <Draggable

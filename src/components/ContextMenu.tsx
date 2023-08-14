@@ -20,7 +20,6 @@ export const ContextMenu = React.forwardRef((props, ref) => {
             cursor: "pointer",
             userSelect: "none",
           }}
-          onClick={() => console.log("Edit clicked")}
           onMouseEnter={(e) => {
             e.target.style.backgroundColor = "#f1f1f1";
           }}

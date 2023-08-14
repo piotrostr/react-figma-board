@@ -12,11 +12,11 @@ function App() {
   const [dragActive, setDragActive] = useState(false);
   const selectBox = useAppSelector((state) => state.selectBox);
   const contextMenuRef = useRef<HTMLDivElement>(null); // Ref to the context menu
-  const draggableItemRefs = useRef<Array<HTMLDivElement>>([]); // Ref to the draggable items
   const selectBoxRef = useRef<HTMLDivElement>(null); // Ref to the select box
   const [selectedItems, setSelectedItems] = useState<Array<string>>([]); // Ref to the selected items
+  const [delta, setDelta] = useState({ x: 0, y: 0 });
 
-  const value = useAppSelector((state) => state.counter.count);
+  const draggableRefs = useAppSelector((state) => state.draggableRefs);
   const dispatch = useAppDispatch();
 
   useEffect(() => {
@@ -73,7 +73,7 @@ function App() {
 
   const handleMouseDown = (event: MouseEvent) => {
     handleCloseContextMenu();
-    setSelectedItems([]);
+
     if (event.shiftKey) {
       dispatch(
         updateSelectBox({
@@ -83,18 +83,21 @@ function App() {
           height: 0,
         }),
       );
+    } else {
+      setSelectedItems([]);
     }
   };
 
   const handleMouseUp = (event: MouseEvent) => {
-    if (!event.shiftKey) {
+    if (event.shiftKey) {
       const _selectedItems: Array<string> = [];
-      draggableItemRefs.current.forEach((itemElem) => {
-        if (itemElem === null || selectBoxRef.current === null) {
+      draggableRefs.forEach((itemElem) => {
+        const selectBoxElem = selectBoxRef.current;
+        if (itemElem === null || selectBoxElem === null) {
           return;
         }
         const itemRect = itemElem.getBoundingClientRect();
-        const selectBoxRect = selectBoxRef.current.getBoundingClientRect();
+        const selectBoxRect = selectBoxElem.getBoundingClientRect();
         if (selectBoxRect === undefined) {
           return;
         }
@@ -107,7 +110,7 @@ function App() {
           _selectedItems.push(itemElem.id);
         }
       });
-      setSelectedItems(_selectedItems);
+      setSelectedItems((prev) => [...prev, ..._selectedItems]);
       dispatch(
         updateSelectBox({
           active: false,
@@ -118,13 +121,6 @@ function App() {
         }),
       );
     }
-  };
-
-  const handleSetRef = (ref: HTMLDivElement) => {
-    if (ref === null || draggableItemRefs.current.includes(ref)) {
-      return;
-    }
-    draggableItemRefs.current.push(ref);
   };
 
   return (
@@ -175,13 +171,15 @@ function App() {
                       }}
                     >
                       <DraggableStory
+                        dragActive={dragActive}
                         setDragActive={setDragActive}
                         scale={utils.instance.transformState.scale}
-                        setRefs={handleSetRef}
                         index={i}
                         selectedItems={selectedItems}
+                        setSelectedItems={setSelectedItems}
+                        delta={delta}
+                        setDelta={setDelta}
                       />
-                      <div>shift was pressed: {value} times</div>
                     </div>
                   ))}
                 </div>
@@ -197,6 +195,7 @@ function App() {
           style={{
             position: "absolute",
             border: "1px solid red",
+            backgroundColor: "rgba(255, 0, 0, 0.1)",
             left:
               selectBox.width < 0 ? selectBox.x + selectBox.width : selectBox.x,
             right:

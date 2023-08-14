@@ -62,6 +62,9 @@ export const Draggable = forwardRef<HTMLButtonElement, Props>(
             "--translate-y": `${transform?.y ?? 0}px`,
           } as React.CSSProperties
         }
+        onMouseDown={(event) => {
+          event.stopPropagation();
+        }}
       >
         <button
           id={id}
