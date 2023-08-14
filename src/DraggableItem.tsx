@@ -14,8 +14,10 @@ import {
 import type { Coordinates } from "@dnd-kit/utilities";
 
 import { Axis, Draggable, Wrapper } from "./components";
-import { useAppDispatch } from "./hooks";
+import { useAppDispatch, useAppSelector } from "./hooks";
 import { updateDraggableRefs } from "./draggableRefsSlice";
+import { setDelta } from "./deltaSlice";
+import { clearSelectedItems } from "./selectedItemsSlice";
 
 export default {
   title: "Core/Draggable/Hooks/useDraggable",
@@ -38,10 +40,6 @@ interface Props {
   setDragActive?: (active: boolean) => void;
   scale: number;
   index?: number;
-  selectedItems?: string[];
-  setSelectedItems?: (items: string[]) => void;
-  delta?: Coordinates;
-  setDelta?: (delta: Coordinates) => void;
 }
 
 export function DraggableStory({
@@ -56,10 +54,6 @@ export function DraggableStory({
   setDragActive,
   scale,
   index,
-  selectedItems,
-  setSelectedItems,
-  delta,
-  setDelta,
 }: Props) {
   const [prevCoordinates, setPrevCoordinates] = useState<Coordinates>({
     x: 0,
@@ -75,15 +69,22 @@ export function DraggableStory({
   const keyboardSensor = useSensor(KeyboardSensor, {});
   const sensors = useSensors(mouseSensor, touchSensor, keyboardSensor);
 
+  const dispatch = useAppDispatch();
+  const delta = useAppSelector((state) => state.delta);
+
+  const selectedItems = useAppSelector(
+    (state) => state.selectedItems.selectedItems,
+  );
+
   const handleDragStart = () => {
     setDragActive?.(true);
     if (!selectedItems?.includes(`draggable-${index}`)) {
-      setSelectedItems?.([]);
+      dispatch(clearSelectedItems());
     }
   };
 
   const handleDragMove = ({ delta }: { delta: Coordinates }) => {
-    setDelta?.(delta);
+    dispatch(setDelta({ x: delta.x, y: delta.y }));
     setCoordinates({
       x: Math.floor(prevCoordinates.x + delta.x / scale),
       y: Math.floor(prevCoordinates.y + delta.y / scale),
@@ -91,7 +92,7 @@ export function DraggableStory({
   };
 
   const handleDragEnd = () => {
-    setDelta?.({ x: 0, y: 0 });
+    dispatch(setDelta({ x: 0, y: 0 }));
     setPrevCoordinates({ x, y });
     setDragActive?.(false);
   };
@@ -105,7 +106,7 @@ export function DraggableStory({
     } else if (!dragActive && selectedItems?.includes(`draggable-${index}`)) {
       setPrevCoordinates({ x, y });
     }
-  }, [delta, dragActive, selectedItems]);
+  }, [delta, dragActive, selectedItems, index, prevCoordinates, scale, x, y]);
 
   return (
     <DndContext

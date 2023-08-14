@@ -17,6 +17,7 @@ export enum Axis {
 }
 
 interface Props {
+  id: string;
   axis?: Axis;
   dragOverlay?: boolean;
   dragging?: boolean;

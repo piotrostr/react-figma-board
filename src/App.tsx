@@ -7,15 +7,20 @@ import { ContextMenu } from "./components/ContextMenu";
 import { useAppDispatch, useAppSelector } from "./hooks";
 import { increment } from "./slice";
 import { updateSelectBox } from "./selectBoxSlice";
+import {
+  selectItems,
+  deselectItems,
+  clearSelectedItems,
+} from "./selectedItemsSlice";
 
 function App() {
   const [dragActive, setDragActive] = useState(false);
   const selectBox = useAppSelector((state) => state.selectBox);
   const contextMenuRef = useRef<HTMLDivElement>(null); // Ref to the context menu
   const selectBoxRef = useRef<HTMLDivElement>(null); // Ref to the select box
-  const [selectedItems, setSelectedItems] = useState<Array<string>>([]); // Ref to the selected items
-  const [delta, setDelta] = useState({ x: 0, y: 0 });
-
+  const selectedItems = useAppSelector(
+    (state) => state.selectedItems.selectedItems,
+  );
   const draggableRefs = useAppSelector((state) => state.draggableRefs);
   const dispatch = useAppDispatch();
 
@@ -84,7 +89,7 @@ function App() {
         }),
       );
     } else {
-      setSelectedItems([]);
+      dispatch(clearSelectedItems());
     }
   };
 
@@ -110,7 +115,11 @@ function App() {
           _selectedItems.push(itemElem.id);
         }
       });
-      setSelectedItems((prev) => [...prev, ..._selectedItems]);
+      dispatch(
+        selectItems({
+          items: _selectedItems,
+        }),
+      );
       dispatch(
         updateSelectBox({
           active: false,
@@ -175,10 +184,6 @@ function App() {
                         setDragActive={setDragActive}
                         scale={utils.instance.transformState.scale}
                         index={i}
-                        selectedItems={selectedItems}
-                        setSelectedItems={setSelectedItems}
-                        delta={delta}
-                        setDelta={setDelta}
                       />
                     </div>
                   ))}

@@ -2,12 +2,16 @@ import { configureStore } from "@reduxjs/toolkit";
 import { slice as counter } from "./slice";
 import { slice as selectBox } from "./selectBoxSlice";
 import { slice as draggableRefs } from "./draggableRefsSlice";
+import { slice as delta } from "./deltaSlice";
+import { slice as selectedItems } from "./selectedItemsSlice";
 
 export const store = configureStore({
   reducer: {
     counter: counter.reducer,
     selectBox: selectBox.reducer,
     draggableRefs: draggableRefs.reducer,
+    delta: delta.reducer,
+    selectedItems: selectedItems.reducer,
   },
 });
 
