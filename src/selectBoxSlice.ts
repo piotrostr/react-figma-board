@@ -9,11 +9,11 @@ export interface SelectBoxState {
 }
 
 const initialState: SelectBoxState = {
+  x: undefined,
+  y: undefined,
   width: 0,
   height: 0,
   active: false,
-  x: undefined,
-  y: undefined,
 };
 
 export const slice = createSlice({

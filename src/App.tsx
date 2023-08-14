@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, MouseEvent } from "react";
+import React, { useRef, useEffect, MouseEvent } from "react";
 import { DndContext } from "@dnd-kit/core";
 import { TransformWrapper, TransformComponent } from "react-zoom-pan-pinch";
 import { DraggableStory } from "./DraggableItem";
@@ -8,6 +8,8 @@ import { useAppDispatch, useAppSelector } from "./hooks";
 import { increment } from "./slice";
 import { updateSelectBox } from "./selectBoxSlice";
 import { selectItems, clearSelectedItems } from "./selectedItemsSlice";
+import { hash } from "./utils";
+import { BoundingRect } from "./boundingRectsSlice";
 
 function App() {
   const drag = useAppSelector((state) => state.drag);
@@ -17,9 +19,10 @@ function App() {
   const selectedItems = useAppSelector(
     (state) => state.selectedItems.selectedItems,
   );
-  const draggableRefs = useAppSelector((state) => state.draggableRefs);
+  const boundingRects = useAppSelector(
+    (state) => state.boundingRects.boundingRects,
+  );
   const dispatch = useAppDispatch();
-
   useEffect(() => {
     // this uses the native KeyboardEvent, not the React KeyboardEvent
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -55,6 +58,7 @@ function App() {
     };
   }, [dispatch]);
 
+  // this is for when you right-click with the mouse
   const handleContextMenu = (event: MouseEvent) => {
     event.preventDefault();
     if (contextMenuRef.current === null) {
@@ -88,34 +92,45 @@ function App() {
       dispatch(clearSelectedItems());
     }
   };
+  const checkForCollision = (selectBox: BoundingRect, rect: BoundingRect) => {
+    // any time the select box is hovering over a draggable item, we want to select it
+    return (
+      selectBox.left < rect.right &&
+      selectBox.right > rect.left &&
+      selectBox.top < rect.bottom &&
+      selectBox.bottom > rect.top
+    );
+  };
 
   const handleMouseUp = (event: MouseEvent) => {
     if (event.shiftKey) {
-      const _selectedItems: Array<string> = [];
-      draggableRefs.forEach((itemElem) => {
-        const selectBoxElem = selectBoxRef.current;
-        if (itemElem === null || selectBoxElem === null) {
-          return;
-        }
-        const itemRect = itemElem.getBoundingClientRect();
-        const selectBoxRect = selectBoxElem.getBoundingClientRect();
-        if (selectBoxRect === undefined) {
-          return;
-        }
-        const isInBox =
-          itemRect.left > selectBoxRect?.left &&
-          itemRect.right < selectBoxRect?.right &&
-          itemRect.top > selectBoxRect?.top &&
-          itemRect.bottom < selectBoxRect?.bottom;
-        if (isInBox) {
-          _selectedItems.push(itemElem.id);
-        }
-      });
-      dispatch(
-        selectItems({
-          items: _selectedItems,
-        }),
-      );
+      boundingRects
+        // .filter(({ id }) => !selectedItems.includes(id))
+        .forEach(({ boundingRect, id }) => {
+          if (selectBoxRef.current === null) {
+            return;
+          }
+          const clientRect = selectBoxRef.current.getBoundingClientRect();
+          const selectBoxRect = {
+            left: clientRect.left,
+            right: clientRect.right,
+            top: clientRect.top,
+            bottom: clientRect.bottom,
+          };
+          console.log(selectBoxRect, boundingRect);
+
+          if (
+            checkForCollision(selectBoxRect, boundingRect) &&
+            !selectBox.active &&
+            !drag.active
+          ) {
+            dispatch(
+              selectItems({
+                items: [...selectedItems, id],
+              }),
+            );
+          }
+        });
       dispatch(
         updateSelectBox({
           active: false,
@@ -167,17 +182,17 @@ function App() {
                   {Array.from(Array(5).keys()).map((i) => (
                     <div
                       key={i}
-                      id={`draggable-item-${i}`}
+                      id={hash(String(i))}
                       style={{
                         width: "fit-content",
-                        border: selectedItems.includes(`draggable-item-${i}`)
+                        border: selectedItems.includes(hash(String(i)))
                           ? "1px solid red"
                           : "none",
                       }}
                     >
                       <DraggableStory
                         scale={utils.instance.transformState.scale}
-                        index={i}
+                        id={hash(String(i))}
                       />
                     </div>
                   ))}

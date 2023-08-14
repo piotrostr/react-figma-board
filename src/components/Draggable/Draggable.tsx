@@ -1,4 +1,4 @@
-import React, { forwardRef, useState } from "react";
+import React, { forwardRef } from "react";
 import classNames from "classnames";
 import type { DraggableSyntheticListeners } from "@dnd-kit/core";
 import type { Transform } from "@dnd-kit/utilities";
@@ -88,7 +88,7 @@ export const Draggable = forwardRef<HTMLButtonElement, Props>(
             : draggable}
           {handle ? <Handle {...(handle ? listeners : {})} /> : null}
         </button>
-        {label ? <label>{label}</label> : null}
+        {id ? <label>{id}</label> : null}
       </div>
     );
   },
