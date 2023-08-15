@@ -9,6 +9,7 @@ import {
   draggableVertical,
 } from "./draggable-svg";
 import styles from "./Draggable.module.css";
+import { useAppSelector } from "../../hooks";
 
 export enum Axis {
   All,
@@ -22,12 +23,10 @@ interface Props {
   dragOverlay?: boolean;
   dragging?: boolean;
   handle?: boolean;
-  label?: string;
   listeners?: DraggableSyntheticListeners;
   style?: React.CSSProperties;
   buttonStyle?: React.CSSProperties;
   transform?: Transform | null;
-  selectedItems?: string[];
 }
 
 export const Draggable = forwardRef<HTMLButtonElement, Props>(
@@ -38,16 +37,18 @@ export const Draggable = forwardRef<HTMLButtonElement, Props>(
       dragOverlay,
       dragging,
       handle,
-      label,
       listeners,
       transform,
       style,
       buttonStyle,
-      selectedItems,
       ...props
     },
     ref,
   ) {
+    const selectedItems = useAppSelector(
+      (state) => state.selectedItems.selectedItems,
+    );
+
     return (
       <div
         className={classNames(

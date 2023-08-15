@@ -15,11 +15,11 @@ import type { Coordinates } from "@dnd-kit/utilities";
 
 import { Axis, Draggable, Wrapper } from "./components";
 import { useAppDispatch, useAppSelector } from "./hooks";
-import { updateBoundingRects } from "./boundingRectsSlice";
 import { setDelta } from "./deltaSlice";
 import { setDragActive } from "./dragSlice";
 import { initializeCoordinates, updateCoordinates } from "./coordinatesSlice";
 import { createSelector } from "@reduxjs/toolkit";
+import { clearSelectedItems } from "./selectedItemsSlice";
 
 export default {
   title: "Core/Draggable/Hooks/useDraggable",
@@ -34,6 +34,7 @@ interface Props {
   style?: React.CSSProperties;
   scale: number;
   id: string;
+  setDraggableRefs: (value: HTMLDivElement) => void;
 }
 
 export function DraggableStory({
@@ -45,6 +46,7 @@ export function DraggableStory({
   buttonStyle,
   scale,
   id,
+  setDraggableRefs,
 }: Props) {
   const dispatch = useAppDispatch();
 
@@ -78,15 +80,15 @@ export function DraggableStory({
   const keyboardSensor = useSensor(KeyboardSensor, {});
   const sensors = useSensors(mouseSensor, touchSensor, keyboardSensor);
 
-  const delta = useAppSelector((state) => state.delta);
-  const drag = useAppSelector((state) => state.drag);
-
   const selectedItems = useAppSelector(
     (state) => state.selectedItems.selectedItems,
   );
 
   const handleDragStart = () => {
     dispatch(setDragActive(true));
+    if (!selectedItems?.includes(id)) {
+      dispatch(clearSelectedItems());
+    }
   };
 
   const handleDragMove = ({ delta }: { delta: Coordinates }) => {
@@ -115,40 +117,11 @@ export function DraggableStory({
     dispatch(setDragActive(false));
   };
 
-  useEffect(() => {
-    if (drag.active && selectedItems?.includes(id)) {
-      prevCoordinates &&
-        dispatch(
-          updateCoordinates({
-            id,
-            coordinates: {
-              x: Math.floor(prevCoordinates.x + delta.x / scale),
-              y: Math.floor(prevCoordinates.y + delta.y / scale),
-            },
-          }),
-        );
-    } else if (!drag.active && selectedItems?.includes(id)) {
-      coordinates &&
-        dispatch(
-          updateCoordinates({
-            id,
-            prevCoordinates: coordinates,
-          }),
-        );
-    }
-  }, [
-    dispatch,
-    delta,
-    drag,
-    selectedItems,
-    id,
-    prevCoordinates,
-    scale,
-    coordinates,
-  ]);
-
   return (
     <DndContext
+      onClick={() => {
+        dispatch(clearSelectedItems());
+      }}
       sensors={sensors}
       onDragStart={handleDragStart}
       onDragMove={handleDragMove}
@@ -157,6 +130,7 @@ export function DraggableStory({
     >
       <Wrapper>
         <DraggableItem
+          scale={scale}
           axis={axis}
           handle={handle}
           top={coordinates?.y}
@@ -165,6 +139,7 @@ export function DraggableStory({
           buttonStyle={buttonStyle}
           id={id}
           selectedItems={selectedItems}
+          setDraggableRefs={setDraggableRefs}
         />
       </Wrapper>
     </DndContext>
@@ -172,6 +147,7 @@ export function DraggableStory({
 }
 
 interface DraggableItemProps {
+  scale: number;
   handle?: boolean;
   style?: React.CSSProperties;
   buttonStyle?: React.CSSProperties;
@@ -180,9 +156,11 @@ interface DraggableItemProps {
   left?: number;
   id: string;
   selectedItems?: string[];
+  setDraggableRefs?: (value: HTMLDivElement) => void;
 }
 
 function DraggableItem({
+  scale,
   axis,
   style,
   top,
@@ -191,13 +169,35 @@ function DraggableItem({
   buttonStyle,
   id,
   selectedItems,
+  setDraggableRefs,
 }: DraggableItemProps) {
   const { attributes, isDragging, listeners, setNodeRef, transform, node } =
     useDraggable({ id });
   const dispatch = useAppDispatch();
+  const delta = useAppSelector((state) => state.delta);
+  const drag = useAppSelector((state) => state.drag);
+  const selectCoordinates = createSelector(
+    [
+      (state) => {
+        if (
+          !state.coordinates ||
+          !state.coordinates ||
+          !state.coordinates.map ||
+          !state.coordinates.map[id]
+        ) {
+          return { coordinates: {}, prevCoordinates: {} };
+        }
+        return {
+          coordinates: state.coordinates.map[id].coordinates,
+          prevCoordinates: state.coordinates.map[id].prevCoordinates,
+        };
+      },
+    ],
+    (state) => state,
+  );
+  const { coordinates, prevCoordinates } = useAppSelector(selectCoordinates);
 
   useEffect(() => {
-    // initialize the coordinates based on refs
     const boundingRect = node?.current?.getBoundingClientRect();
     if (!boundingRect) {
       return;
@@ -218,22 +218,31 @@ function DraggableItem({
   }, [dispatch, id, node]);
 
   useEffect(() => {
-    if (!node?.current?.id) {
-      return;
+    setDraggableRefs(node);
+  }, [node, setDraggableRefs]);
+
+  useEffect(() => {
+    if (drag.active && selectedItems?.includes(id) && !isDragging) {
+      coordinates &&
+        dispatch(
+          updateCoordinates({
+            id,
+            coordinates: {
+              x: Math.floor(prevCoordinates.x + delta.x / scale),
+              y: Math.floor(prevCoordinates.y + delta.y / scale),
+            },
+          }),
+        );
+    } else if (!drag.active && selectedItems?.includes(id) && !isDragging) {
+      coordinates &&
+        dispatch(
+          updateCoordinates({
+            id,
+            prevCoordinates: coordinates,
+          }),
+        );
     }
-    const boundingRect = node.current.getBoundingClientRect();
-    dispatch(
-      updateBoundingRects({
-        id: node.current.id,
-        boundingRect: {
-          left: boundingRect.left,
-          right: boundingRect.right,
-          top: boundingRect.top,
-          bottom: boundingRect.bottom,
-        },
-      }),
-    );
-  }, [dispatch, node]);
+  }, [delta]);
 
   return (
     <Draggable

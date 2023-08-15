@@ -1,7 +1,6 @@
 import { configureStore } from "@reduxjs/toolkit";
 import { slice as counter } from "./slice";
 import { slice as selectBox } from "./selectBoxSlice";
-import { slice as boundingRects } from "./boundingRectsSlice";
 import { slice as delta } from "./deltaSlice";
 import { slice as selectedItems } from "./selectedItemsSlice";
 import { slice as drag } from "./dragSlice";
@@ -11,7 +10,6 @@ export const store = configureStore({
   reducer: {
     counter: counter.reducer,
     selectBox: selectBox.reducer,
-    boundingRects: boundingRects.reducer,
     delta: delta.reducer,
     selectedItems: selectedItems.reducer,
     drag: drag.reducer,

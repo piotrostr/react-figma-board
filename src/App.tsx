@@ -1,4 +1,4 @@
-import React, { useRef, useEffect, MouseEvent } from "react";
+import React, { useRef, useEffect, MouseEvent, useState } from "react";
 import { DndContext } from "@dnd-kit/core";
 import { TransformWrapper, TransformComponent } from "react-zoom-pan-pinch";
 import { DraggableStory } from "./DraggableItem";
@@ -16,13 +16,12 @@ function App() {
   const selectBox = useAppSelector((state) => state.selectBox);
   const contextMenuRef = useRef<HTMLDivElement>(null); // Ref to the context menu
   const selectBoxRef = useRef<HTMLDivElement>(null); // Ref to the select box
+  const draggableRefs = useRef<Record<string, HTMLButtonElement>>([]); // Refs to the draggable items
   const selectedItems = useAppSelector(
     (state) => state.selectedItems.selectedItems,
   );
-  const boundingRects = useAppSelector(
-    (state) => state.boundingRects.boundingRects,
-  );
   const dispatch = useAppDispatch();
+
   useEffect(() => {
     // this uses the native KeyboardEvent, not the React KeyboardEvent
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -94,46 +93,36 @@ function App() {
   };
   const checkForCollision = (selectBox: BoundingRect, rect: BoundingRect) => {
     // any time the select box is hovering over a draggable item, we want to select it
-    return (
+    const isColliding =
       selectBox.left < rect.right &&
       selectBox.right > rect.left &&
       selectBox.top < rect.bottom &&
-      selectBox.bottom > rect.top
-    );
+      selectBox.bottom > rect.top;
+    return isColliding;
   };
 
   const handleMouseUp = (event: MouseEvent) => {
     if (event.shiftKey) {
-      boundingRects
+      draggableRefs.current
         // .filter(({ id }) => !selectedItems.includes(id))
-        .forEach(({ boundingRect, id }) => {
+        .forEach((ref) => {
           if (selectBoxRef.current === null) {
             return;
           }
-          const clientRect = selectBoxRef.current.getBoundingClientRect();
-          const selectBoxRect = {
-            left: clientRect.left,
-            right: clientRect.right,
-            top: clientRect.top,
-            bottom: clientRect.bottom,
-          };
-          console.log(selectBoxRect, boundingRect);
-
-          if (
-            checkForCollision(selectBoxRect, boundingRect) &&
-            !selectBox.active &&
-            !drag.active
-          ) {
+          const selectBoxRect = selectBoxRef.current.getBoundingClientRect();
+          const boundingRect = ref.getBoundingClientRect();
+          const isColliding = checkForCollision(selectBoxRect, boundingRect);
+          if (isColliding && selectBox.active && !drag.active) {
             dispatch(
               selectItems({
-                items: [...selectedItems, id],
+                items: [...selectedItems, ref.id],
               }),
             );
           }
         });
       dispatch(
         updateSelectBox({
-          active: false,
+          active: true,
           width: 0,
           height: 0,
           x: undefined,
@@ -141,6 +130,13 @@ function App() {
         }),
       );
     }
+  };
+
+  const setDraggableRefs = (value) => {
+    if (draggableRefs.current.includes(value.current)) {
+      return;
+    }
+    draggableRefs.current = [...draggableRefs.current, value.current];
   };
 
   return (
@@ -185,14 +181,12 @@ function App() {
                       id={hash(String(i))}
                       style={{
                         width: "fit-content",
-                        border: selectedItems.includes(hash(String(i)))
-                          ? "1px solid red"
-                          : "none",
                       }}
                     >
                       <DraggableStory
                         scale={utils.instance.transformState.scale}
                         id={hash(String(i))}
+                        setDraggableRefs={setDraggableRefs}
                       />
                     </div>
                   ))}
