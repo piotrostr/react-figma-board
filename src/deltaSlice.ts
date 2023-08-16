@@ -14,7 +14,7 @@ export const slice = createSlice({
   name: "delta",
   initialState,
   reducers: {
-    setDelta: (state, action) => {
+    setDelta: (_, action) => {
       return { ...action.payload };
     },
   },
