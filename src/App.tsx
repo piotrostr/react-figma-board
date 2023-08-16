@@ -1,4 +1,4 @@
-import React, { useRef, useEffect, MouseEvent, useState } from "react";
+import React, { useRef, useEffect, MouseEvent, LegacyRef } from "react";
 import { DndContext } from "@dnd-kit/core";
 import { TransformWrapper, TransformComponent } from "react-zoom-pan-pinch";
 import { DraggableStory } from "./DraggableItem";
@@ -9,14 +9,20 @@ import { increment } from "./slice";
 import { updateSelectBox } from "./selectBoxSlice";
 import { selectItems, clearSelectedItems } from "./selectedItemsSlice";
 import { hash } from "./utils";
-import { BoundingRect } from "./boundingRectsSlice";
+
+interface BoundingRect {
+  left: number;
+  right: number;
+  top: number;
+  bottom: number;
+}
 
 function App() {
   const drag = useAppSelector((state) => state.drag);
   const selectBox = useAppSelector((state) => state.selectBox);
-  const contextMenuRef = useRef<HTMLDivElement>(null); // Ref to the context menu
-  const selectBoxRef = useRef<HTMLDivElement>(null); // Ref to the select box
-  const draggableRefs = useRef<Record<string, HTMLButtonElement>>([]); // Refs to the draggable items
+  const contextMenuRef = useRef<HTMLElement>(null); // Ref to the context menu
+  const selectBoxRef = useRef<HTMLElement>(null); // Ref to the select box
+  const draggableRefs = useRef<Array<HTMLElement>>(); // Refs to the draggable items
   const selectedItems = useAppSelector(
     (state) => state.selectedItems.selectedItems,
   );
@@ -103,23 +109,24 @@ function App() {
 
   const handleMouseUp = (event: MouseEvent) => {
     if (event.shiftKey) {
-      draggableRefs.current
-        // .filter(({ id }) => !selectedItems.includes(id))
-        .forEach((ref) => {
-          if (selectBoxRef.current === null) {
-            return;
-          }
-          const selectBoxRect = selectBoxRef.current.getBoundingClientRect();
-          const boundingRect = ref.getBoundingClientRect();
-          const isColliding = checkForCollision(selectBoxRect, boundingRect);
-          if (isColliding && selectBox.active && !drag.active) {
-            dispatch(
-              selectItems({
-                items: [...selectedItems, ref.id],
-              }),
-            );
-          }
-        });
+      if (!draggableRefs.current) {
+        return;
+      }
+      for (const ref of draggableRefs.current) {
+        if (selectBoxRef.current === null) {
+          return;
+        }
+        const selectBoxRect = selectBoxRef.current.getBoundingClientRect();
+        const rect = ref.getBoundingClientRect();
+        const isColliding = checkForCollision(selectBoxRect, rect);
+        if (isColliding && selectBox.active && !drag.active) {
+          dispatch(
+            selectItems({
+              items: [...selectedItems, ref.id],
+            }),
+          );
+        }
+      }
       dispatch(
         updateSelectBox({
           active: true,
@@ -132,11 +139,15 @@ function App() {
     }
   };
 
-  const setDraggableRefs = (value) => {
-    if (draggableRefs.current.includes(value.current)) {
+  // value is of type react ref
+  const setDraggableRefs = (current: HTMLElement) => {
+    if (draggableRefs.current === undefined) {
       return;
     }
-    draggableRefs.current = [...draggableRefs.current, value.current];
+    if (draggableRefs.current.includes(current)) {
+      return;
+    }
+    draggableRefs.current = [...draggableRefs.current, current];
   };
 
   return (
@@ -199,7 +210,7 @@ function App() {
       <ContextMenu ref={contextMenuRef} />
       {selectBox.active && selectBox.x && selectBox.y && !drag.active ? (
         <div
-          ref={selectBoxRef}
+          ref={selectBoxRef as LegacyRef<HTMLDivElement>} // TODO(piotrostr) this is hacky, should not be like that
           style={{
             position: "absolute",
             border: "1px solid red",

@@ -34,7 +34,7 @@ interface Props {
   style?: React.CSSProperties;
   scale: number;
   id: string;
-  setDraggableRefs: (value: HTMLDivElement) => void;
+  setDraggableRefs: (current: HTMLElement) => void;
 }
 
 export function DraggableStory({
@@ -119,9 +119,6 @@ export function DraggableStory({
 
   return (
     <DndContext
-      onClick={() => {
-        dispatch(clearSelectedItems());
-      }}
       sensors={sensors}
       onDragStart={handleDragStart}
       onDragMove={handleDragMove}
@@ -156,7 +153,7 @@ interface DraggableItemProps {
   left?: number;
   id: string;
   selectedItems?: string[];
-  setDraggableRefs?: (value: HTMLDivElement) => void;
+  setDraggableRefs?: (current: HTMLElement) => void;
 }
 
 function DraggableItem({
@@ -218,7 +215,10 @@ function DraggableItem({
   }, [dispatch, id, node]);
 
   useEffect(() => {
-    setDraggableRefs(node);
+    if (!node || !setDraggableRefs || node.current === null || node === null) {
+      return;
+    }
+    setDraggableRefs(node.current);
   }, [node, setDraggableRefs]);
 
   useEffect(() => {
@@ -242,7 +242,18 @@ function DraggableItem({
           }),
         );
     }
-  }, [delta]);
+  }, [
+    delta,
+    coordinates,
+    drag.active,
+    selectedItems,
+    id,
+    isDragging,
+    dispatch,
+    prevCoordinates.x,
+    prevCoordinates.y,
+    scale,
+  ]);
 
   return (
     <Draggable
@@ -255,7 +266,6 @@ function DraggableItem({
       buttonStyle={buttonStyle}
       transform={transform}
       axis={axis}
-      selectedItems={selectedItems}
       {...attributes}
     />
   );
