@@ -1,7 +1,7 @@
 import React, { useRef, useEffect, MouseEvent, useState } from "react";
 import { DndContext } from "@dnd-kit/core";
 import { TransformWrapper, TransformComponent } from "react-zoom-pan-pinch";
-import { DraggableStory } from "./DraggableItem";
+import { DraggableWrapper } from "./DraggableWrapper";
 import { Controls } from "./Controls";
 import { ContextMenu } from "./components/ContextMenu";
 import { useAppDispatch, useAppSelector } from "./hooks";
@@ -9,18 +9,33 @@ import { increment } from "./slice";
 import { updateSelectBox } from "./selectBoxSlice";
 import { selectItems, clearSelectedItems } from "./selectedItemsSlice";
 import { hash } from "./utils";
-import { BoundingRect } from "./boundingRectsSlice";
+import loadComponents from "./ComponentLoader";
+interface BoundingRect {
+  left: number;
+  right: number;
+  top: number;
+  bottom: number;
+}
 
 function App() {
   const drag = useAppSelector((state) => state.drag);
   const selectBox = useAppSelector((state) => state.selectBox);
   const contextMenuRef = useRef<HTMLDivElement>(null); // Ref to the context menu
   const selectBoxRef = useRef<HTMLDivElement>(null); // Ref to the select box
-  const draggableRefs = useRef<Record<string, HTMLButtonElement>>([]); // Refs to the draggable items
+  const draggableRefs = useRef<HTMLDivElement[]>([]); // Refs to the draggable items
   const selectedItems = useAppSelector(
     (state) => state.selectedItems.selectedItems,
   );
+  const [components, setComponents] = useState([]);
   const dispatch = useAppDispatch();
+
+  useEffect(() => {
+    async function fetchComponents() {
+      const loadedComponents = await loadComponents();
+      setComponents(loadedComponents);
+    }
+    fetchComponents();
+  }, []);
 
   useEffect(() => {
     // this uses the native KeyboardEvent, not the React KeyboardEvent
@@ -132,7 +147,7 @@ function App() {
     }
   };
 
-  const setDraggableRefs = (value) => {
+  const setDraggableRefs = (value: HTMLDivElement) => {
     if (draggableRefs.current.includes(value.current)) {
       return;
     }
@@ -175,21 +190,49 @@ function App() {
                     height: "100vh",
                   }}
                 >
-                  {Array.from(Array(5).keys()).map((i) => (
-                    <div
-                      key={i}
-                      id={hash(String(i))}
-                      style={{
-                        width: "fit-content",
-                      }}
-                    >
-                      <DraggableStory
-                        scale={utils.instance.transformState.scale}
+                  {components.map((Component, i) => {
+                    const Module = Component.module;
+                    return (
+                      <div
+                        key={i}
                         id={hash(String(i))}
-                        setDraggableRefs={setDraggableRefs}
-                      />
-                    </div>
-                  ))}
+                        style={{
+                          width: "fit-content",
+                        }}
+                      >
+                        <DraggableWrapper
+                          scale={utils.instance.transformState.scale}
+                          id={hash(String(i))}
+                          setDraggableRefs={setDraggableRefs}
+                        >
+                          <div
+                            style={{
+                              zIndex: 50,
+                              border: "1px solid red",
+                              padding: 50,
+                            }}
+                          >
+                            <div>{Component.name}</div>
+                            <div
+                              style={{
+                                zIndex: 998,
+                              }}
+                            >
+                              <div
+                                style={{
+                                  position: "absolute",
+                                  width: "100%",
+                                  height: "100%",
+                                  zIndex: 999,
+                                }}
+                              />
+                              <Module />
+                            </div>
+                          </div>
+                        </DraggableWrapper>
+                      </div>
+                    );
+                  })}
                 </div>
               </TransformComponent>
             </>

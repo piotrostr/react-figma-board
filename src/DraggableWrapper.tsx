@@ -7,13 +7,9 @@ import {
   TouchSensor,
   KeyboardSensor,
   PointerActivationConstraint,
-  Modifiers,
   useSensors,
 } from "@dnd-kit/core";
-
 import type { Coordinates } from "@dnd-kit/utilities";
-
-import { Axis, Draggable, Wrapper } from "./components";
 import { useAppDispatch, useAppSelector } from "./hooks";
 import { setDelta } from "./deltaSlice";
 import { setDragActive } from "./dragSlice";
@@ -27,26 +23,20 @@ export default {
 
 interface Props {
   activationConstraint?: PointerActivationConstraint;
-  axis?: Axis;
   handle?: boolean;
-  modifiers?: Modifiers;
-  buttonStyle?: React.CSSProperties;
-  style?: React.CSSProperties;
   scale: number;
   id: string;
   setDraggableRefs: (value: HTMLDivElement) => void;
+  children?: React.ReactNode;
 }
 
-export function DraggableStory({
+export function DraggableWrapper({
   activationConstraint,
-  axis,
   handle,
-  modifiers,
-  style,
-  buttonStyle,
   scale,
   id,
   setDraggableRefs,
+  children,
 }: Props) {
   const dispatch = useAppDispatch();
 
@@ -126,22 +116,17 @@ export function DraggableStory({
       onDragStart={handleDragStart}
       onDragMove={handleDragMove}
       onDragEnd={handleDragEnd}
-      modifiers={modifiers}
     >
-      <Wrapper>
-        <DraggableItem
-          scale={scale}
-          axis={axis}
-          handle={handle}
-          top={coordinates?.y}
-          left={coordinates?.x}
-          style={style}
-          buttonStyle={buttonStyle}
-          id={id}
-          selectedItems={selectedItems}
-          setDraggableRefs={setDraggableRefs}
-        />
-      </Wrapper>
+      <DraggableItem
+        scale={scale}
+        handle={handle}
+        top={coordinates?.y}
+        left={coordinates?.x}
+        id={id}
+        setDraggableRefs={setDraggableRefs}
+      >
+        {children}
+      </DraggableItem>
     </DndContext>
   );
 }
@@ -149,33 +134,31 @@ export function DraggableStory({
 interface DraggableItemProps {
   scale: number;
   handle?: boolean;
-  style?: React.CSSProperties;
-  buttonStyle?: React.CSSProperties;
-  axis?: Axis;
   top?: number;
   left?: number;
   id: string;
-  selectedItems?: string[];
   setDraggableRefs?: (value: HTMLDivElement) => void;
+  children?: React.ReactNode;
 }
 
 function DraggableItem({
   scale,
-  axis,
-  style,
   top,
   left,
   handle,
-  buttonStyle,
   id,
-  selectedItems,
+  children,
   setDraggableRefs,
 }: DraggableItemProps) {
-  const { attributes, isDragging, listeners, setNodeRef, transform, node } =
-    useDraggable({ id });
+  const { isDragging, listeners, setNodeRef, node } = useDraggable({
+    id,
+  });
   const dispatch = useAppDispatch();
   const delta = useAppSelector((state) => state.delta);
   const drag = useAppSelector((state) => state.drag);
+  const selectedItems = useAppSelector(
+    (state) => state.selectedItems.selectedItems,
+  );
   const selectCoordinates = createSelector(
     [
       (state) => {
@@ -245,18 +228,28 @@ function DraggableItem({
   }, [delta]);
 
   return (
-    <Draggable
-      id={id}
-      ref={setNodeRef}
-      dragging={isDragging}
-      handle={handle}
-      listeners={listeners}
-      style={{ ...style, top, left }}
-      buttonStyle={buttonStyle}
-      transform={transform}
-      axis={axis}
-      selectedItems={selectedItems}
-      {...attributes}
-    />
+    <div
+      style={{
+        top: top,
+        left: left,
+        transform: `translateX(${coordinates.x}px) translateY(${coordinates.y}px)`,
+      }}
+      onMouseDown={(event) => {
+        event.stopPropagation();
+      }}
+    >
+      <div
+        id={id}
+        {...(handle ? {} : listeners)}
+        ref={setNodeRef}
+        style={{
+          all: "unset",
+          cursor: !isDragging ? "grab" : "grabbing",
+          border: selectedItems?.includes(id) ? "1px solid red" : "none",
+        }}
+      >
+        {children}
+      </div>
+    </div>
   );
 }
