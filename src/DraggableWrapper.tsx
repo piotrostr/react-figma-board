@@ -238,7 +238,7 @@ function DraggableItem({
         event.stopPropagation();
       }}
     >
-      <div
+      <button
         id={id}
         {...(handle ? {} : listeners)}
         ref={setNodeRef}
@@ -249,7 +249,7 @@ function DraggableItem({
         }}
       >
         {children}
-      </div>
+      </button>
     </div>
   );
 }
